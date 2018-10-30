@@ -2,7 +2,7 @@
 --	Conversion of Hello_world.v to vh2:
 --
 --	Cypress Semiconductor - WARP Version 6.3 IR 41
---	Tue Oct 30 14:33:55 2018
+--	Tue Oct 30 15:27:04 2018
 --
 
 USE cypress.cypress.all;

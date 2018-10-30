@@ -1,5 +1,5 @@
--- Project:   C:\Documents\Projects\Simple_UART\Hello_world.cydsn\Hello_world.cyprj
--- Generated: 10/30/2018 14:34:01
+-- Project:   C:\Robots-course\robot-project\Hello_world.cydsn\Hello_world.cyprj
+-- Generated: 10/30/2018 15:27:08
 -- PSoC Creator  4.2
 
 ENTITY Hello_world IS

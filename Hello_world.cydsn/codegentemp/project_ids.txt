@@ -1,6 +1,6 @@
-C:\Documents\Projects\Simple_UART\Hello_world.cydsn\Hello_world.cyprj|f5ddaf65-19aa-4fa2-bc60-dc3fbf41f404
-C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|11356fe4-bf6c-4981-a05e-e8507aaa4520
-C:\Documents\PSoC Creator\4.2\Downloads ( 4.2).cylib\Downloads ( 4.2).cyprj|cf1600ef-d7bd-489c-a1f2-124ff065b47b
-C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|b4755393-11c6-454d-a112-c19e75536b29
-C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|615b54fd-05ba-43aa-8eda-279523214e83
-C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|f9e57f32-0665-4f8b-9b5e-7e6b7d5aecbb
+C:\Robots-course\robot-project\Hello_world.cydsn\Hello_world.cyprj|b7cf87a2-e14c-4d32-bc86-1ed64abddb25
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|237d657e-af8a-4ded-a877-310d3a729940
+C:\Users\Mariia\Documents\PSoC Creator\4.2\Downloads ( 4.2).cylib\Downloads ( 4.2).cyprj|cdeae513-880d-43fb-b4ca-5a5ea8ab33d0
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|f01eb23c-cb67-40a4-9f4d-8b6196ecfcd4
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|68775516-e7cb-48a4-b124-e53a51079b48
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|d56b1840-1729-400e-aedb-7e74be8c6ce6

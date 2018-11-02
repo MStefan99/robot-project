@@ -57,15 +57,13 @@
 
 const float battery_voltage_convertion_coeffitient = 1.5;
 const float level_convert_coefficient = 5.0/4095.0;
-uint8 confirm_low_voltage = 1;
+uint8 confirm_low_voltage = 1; // TODO MStefan99: Cleanup
 
 float battery_voltage();
 void led_blink(uint8 mode, uint32 duration);
 
 // Does the tank turn of the robot 
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
-
-int i=0;
 
 CY_ISR_PROTO(Button_Interrupt);
 
@@ -74,6 +72,7 @@ CY_ISR(Button_Interrupt)
     confirm_low_voltage = 1; 
     SW1_ClearInterrupt();    
 }
+
 
 
 
@@ -89,26 +88,22 @@ int zmain(void)
     
     printf("Interrupt test...\n");
     
-    for(;;)
-    {
-                
+    for (;;) {                 
         float voltage = battery_voltage();
-        printf("%d. The voltage is: %.2f V\n", ++i, voltage);
+        printf("The voltage is: %.2f V\n", voltage);
                  
-        if(voltage<4.0)
+        if (voltage < 4.0) {
             confirm_low_voltage = 0;
+        }
         
-        if(!confirm_low_voltage)
+        if (!confirm_low_voltage) {
             led_blink(1, 1000);
-        
-        else
+        } else {
             led_blink(0, 1000);
-                
-    }
-        
+        }        
+    }        
     
     return 0;
-  
 }
 
 
@@ -482,13 +477,11 @@ void zmain(void)
 
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
 {
-
     MotorDirLeft_Write(direction);      // set LeftMotor backward mode
     MotorDirRight_Write(direction);     // set RightMotor backward mode
     PWM_WriteCompare1(l_speed); 
     PWM_WriteCompare2(r_speed); 
-    vTaskDelay(delay);
-    
+    vTaskDelay(delay);    
 }
 
 float battery_voltage()
@@ -505,15 +498,15 @@ float battery_voltage()
 
 void led_blink(uint8 mode, uint32 duration){
     uint8 state=0;
-    if(mode){        
+    if (mode){        
         BatteryLed_Write(state);
         vTaskDelay(duration/2);
         state = !state;
         BatteryLed_Write(state);
         vTaskDelay(duration/2);
+    } else {
+        BatteryLed_Write(0);
     }
-    else 
-    BatteryLed_Write(0);
 }
-
+    
 /* [] END OF FILE */

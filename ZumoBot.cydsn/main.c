@@ -64,6 +64,7 @@ void led_blink(uint8 mode, uint32 duration);
 
 // Does the tank turn of the robot 
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
+void check_age();
 
 CY_ISR_PROTO(Button_Interrupt);
 
@@ -86,6 +87,8 @@ int zmain(void)
     ADC_Battery_Start();
     ADC_Battery_StartConvert();
     
+    check_age();
+    
     printf("Interrupt test...\n");
     
     for (;;) {                 
@@ -106,7 +109,42 @@ int zmain(void)
     return 0;
 }
 
-
+void check_age() 
+{
+    int age = 0;
+    printf("Enter you age:");
+    TickType_t time_start = xTaskGetTickCount();
+    scanf("%d", &age);
+    TickType_t time_end = xTaskGetTickCount();
+    
+    double time = (time_end - time_start) * 0.001; //TODO: add time
+    
+    if (age <= 21) {
+        if (time < 3) {
+            printf("Super fast dude!\n");
+        } else if (time < 3 && time >= 5) {
+            printf("So mediocore.\n");
+        } else if (time > 5) {
+            printf("My granny is faster than you!\n");
+        }
+    } else if (age <= 50 && age >= 22) {
+        if (time < 3) {
+            printf("Be quick or be dead\n");
+        } else if (time < 3 && time >= 5) {
+            printf("You are so average.\n");
+        } else if (time > 5) {
+            printf("Have you been smoking something illegal?\n");
+        }
+    } else if (age > 50) {
+        if (time < 3) {
+            printf("Still going strong\n");
+        } else if (time < 3 && time >= 5) {
+            printf("You are doing ok for your age.\n");
+        } else if (time > 5) {
+            printf("Do they still allow you to drive?\n");
+        }
+    }
+}
 
 #if 0
 // Name and age

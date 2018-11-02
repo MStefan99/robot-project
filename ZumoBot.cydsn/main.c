@@ -31,6 +31,7 @@
 
 #include <project.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "Motor.h"
@@ -64,6 +65,7 @@ void led_blink(uint8 mode, uint32 duration);
 
 // Does the tank turn of the robot 
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
+int get_turn_direction();
 
 CY_ISR_PROTO(Button_Interrupt);
 
@@ -100,7 +102,7 @@ int zmain(void)
             led_blink(1, 1000);
         } else {
             led_blink(0, 1000);
-        }        
+        }   
     }        
     
     return 0;
@@ -117,6 +119,18 @@ void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay
     
     MotorDirLeft_Write(0);
     MotorDirRight_Write(0);
+}
+
+//0 - left, 1 - right
+int get_turn_direction() {
+    int random_direction = rand() % 2;
+    if (random_direction) {
+        printf("Right\n");
+    } else {
+        printf("Left\n");
+    }
+        
+    return random_direction;
 }
 
 #if 0

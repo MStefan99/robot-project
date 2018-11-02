@@ -64,7 +64,7 @@ void led_blink(uint8 mode, uint32 duration);
 
 // Does the tank turn of the robot 
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
-
+void enable_sos_signal();
 CY_ISR_PROTO(Button_Interrupt);
 
 CY_ISR(Button_Interrupt)
@@ -85,10 +85,11 @@ int zmain(void)
     UART_1_Start();    
     ADC_Battery_Start();
     ADC_Battery_StartConvert();
-    
+        
     printf("Interrupt test...\n");
     
-    for (;;) {                 
+    for (;;) {
+        enable_sos_signal();
         float voltage = battery_voltage();
         printf("The voltage is: %.2f V\n", voltage);
                  
@@ -106,8 +107,31 @@ int zmain(void)
     return 0;
 }
 
+void enable_sos_signal() 
+{
+    int max_number = 3;
 
+    for (int x = 0; x < max_number; x++){
+    BatteryLed_Write(1);
+    vTaskDelay(500);
+    BatteryLed_Write(0);
+    vTaskDelay(500);
+    }
 
+    for (int x = 0; x < max_number; x++){
+    BatteryLed_Write(1);
+    vTaskDelay(1500);
+    BatteryLed_Write(0);
+    vTaskDelay(500);
+    }
+    
+    for (int x = 0; x < max_number; x++){
+    BatteryLed_Write(1);
+    vTaskDelay(500);
+    BatteryLed_Write(0);
+    vTaskDelay(500);
+    }
+}
 #if 0
 // Name and age
 void zmain(void)

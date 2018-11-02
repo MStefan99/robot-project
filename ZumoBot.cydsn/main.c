@@ -61,8 +61,9 @@ uint8 confirm_low_voltage = 1; // TODO MStefan99: Cleanup
 
 float battery_voltage();
 void led_blink(uint8 mode, uint32 duration);
+void obstacle_avoid();
 
-// Does the tank turn of the robot 
+// Does the tank turn of the robot: direction of 1 is a right turn and 0 is a left one
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
 
 CY_ISR_PROTO(Button_Interrupt);
@@ -75,36 +76,86 @@ CY_ISR(Button_Interrupt)
 
 
 
-
 int zmain(void)
 {
    
     Button_isr_StartEx(Button_Interrupt);
     CyGlobalIntEnable; /* Enable global interrupts. */
 
+    motor_start();
     UART_1_Start();    
+    Ultra_Start();
     ADC_Battery_Start();
     ADC_Battery_StartConvert();
     
-    printf("Interrupt test...\n");
+    Beep(300, 50);
+    vTaskDelay(100);
+    Beep(300, 50);
+    vTaskDelay(200);
+    Beep(500, 80);
+    
+    printf("Utrasound sensor test test...\n");
     
     for (;;) {                 
         float voltage = battery_voltage();
-        printf("The voltage is: %.2f V\n", voltage);
-                 
-        if (voltage < 4.0) {
-            confirm_low_voltage = 0;
-        }
-        
-        if (!confirm_low_voltage) {
-            led_blink(1, 1000);
-        } else {
-            led_blink(0, 1000);
-        }        
+        printf("The voltage is: %.2f V\n", voltage); 
+        obstacle_avoid();
     }        
     
     return 0;
 }
+
+void obstacle_avoid(){    
+    int distance=20;
+    distance=Ultra_GetDistance();
+    printf("Distance is: %d cm\n", distance);
+    vTaskDelay(50);        
+        
+    if(distance < 10){
+        motor_forward(0,10); 
+        Beep(100, 50);
+        vTaskDelay(20);
+        Beep(100, 50);
+        motor_tank_turn(0,200,200,250);
+    } else {
+        motor_forward(200,10); 
+    }
+}
+
+void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
+{
+    MotorDirLeft_Write(!direction);
+    MotorDirRight_Write(direction);
+    PWM_WriteCompare1(l_speed); 
+    PWM_WriteCompare2(r_speed); 
+    vTaskDelay(delay);    
+}
+
+float battery_voltage()
+{
+    float result = 0;
+    
+    ADC_Battery_IsEndConversion(ADC_Battery_WAIT_FOR_RESULT);
+    int16_t adc_value = ADC_Battery_GetResult16();
+    
+    result = adc_value * battery_voltage_convertion_coeffitient * level_convert_coefficient;
+
+    return result;
+}
+
+void led_blink(uint8 mode, uint32 duration){
+    uint8 state=0;
+    if (mode){        
+        BatteryLed_Write(state);
+        vTaskDelay(duration/2);
+        state = !state;
+        BatteryLed_Write(state);
+        vTaskDelay(duration/2);
+    } else {
+        BatteryLed_Write(0);
+    }
+}
+
 
 
 
@@ -475,38 +526,5 @@ void zmain(void)
  }   
 #endif
 
-void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
-{
-    MotorDirLeft_Write(direction);      // set LeftMotor backward mode
-    MotorDirRight_Write(direction);     // set RightMotor backward mode
-    PWM_WriteCompare1(l_speed); 
-    PWM_WriteCompare2(r_speed); 
-    vTaskDelay(delay);    
-}
-
-float battery_voltage()
-{
-    float result = 0;
-    
-    ADC_Battery_IsEndConversion(ADC_Battery_WAIT_FOR_RESULT);
-    int16_t adc_value = ADC_Battery_GetResult16();
-    
-    result = adc_value * battery_voltage_convertion_coeffitient * level_convert_coefficient;
-
-    return result;
-}
-
-void led_blink(uint8 mode, uint32 duration){
-    uint8 state=0;
-    if (mode){        
-        BatteryLed_Write(state);
-        vTaskDelay(duration/2);
-        state = !state;
-        BatteryLed_Write(state);
-        vTaskDelay(duration/2);
-    } else {
-        BatteryLed_Write(0);
-    }
-}
     
 /* [] END OF FILE */

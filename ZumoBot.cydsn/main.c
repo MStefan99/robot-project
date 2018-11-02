@@ -106,7 +106,18 @@ int zmain(void)
     return 0;
 }
 
-
+//1 - right, 0 - left
+void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
+{
+    MotorDirLeft_Write(!direction);      // set LeftMotor backward mode
+    MotorDirRight_Write(direction);     // set RightMotor backward mode
+    PWM_WriteCompare1(l_speed); 
+    PWM_WriteCompare2(r_speed); 
+    vTaskDelay(delay);    
+    
+    MotorDirLeft_Write(0);
+    MotorDirRight_Write(0);
+}
 
 #if 0
 // Name and age
@@ -474,15 +485,6 @@ void zmain(void)
     }
  }   
 #endif
-
-void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
-{
-    MotorDirLeft_Write(direction);      // set LeftMotor backward mode
-    MotorDirRight_Write(direction);     // set RightMotor backward mode
-    PWM_WriteCompare1(l_speed); 
-    PWM_WriteCompare2(r_speed); 
-    vTaskDelay(delay);    
-}
 
 float battery_voltage()
 {

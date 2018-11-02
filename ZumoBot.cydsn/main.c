@@ -64,7 +64,7 @@ void led_blink(uint8 mode, uint32 duration);
 
 // Does the tank turn of the robot 
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
-
+void move_to_path();
 CY_ISR_PROTO(Button_Interrupt);
 
 CY_ISR(Button_Interrupt)
@@ -88,6 +88,9 @@ int zmain(void)
     
     printf("Interrupt test...\n");
     
+    motor_start();
+    motor_forward(0,0); 
+
     for (;;) {                 
         float voltage = battery_voltage();
         printf("The voltage is: %.2f V\n", voltage);
@@ -101,12 +104,61 @@ int zmain(void)
         } else {
             led_blink(0, 1000);
         }        
-    }        
+        
+        move_to_path();
+    }
+    
+    motor_start();
     
     return 0;
 }
 
+void move_to_path() {
+    //0 - pressed.
+    //1 - up.
+    if (!SW1_Read()) {
+        vTaskDelay(1000);
+        
+        //forward
+        motor_turn(190, 200, 2030);
+        
+        //turn right at place
+        motor_tank_turn(1, 200, 200, 240);
+       
+        //move forward
+        motor_turn(190, 200, 1790);
+        
+        //turn right at place
+        motor_tank_turn(1, 200, 200, 260);
+        
+        //move forward
+         motor_turn(190, 200, 1790);
+        
+        //turn right at place
+        motor_tank_turn(1, 200, 200, 260);
+        
+        //curve
+        motor_turn(200, 150, 1500);
+        
+        //forward
+        motor_turn(190, 200, 1000);
+        
+        motor_forward(0, 500);
+    }
+}
 
+//1 - right, 0 - left
+void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
+{
+    MotorDirLeft_Write(!direction);      // set LeftMotor backward mode
+    MotorDirRight_Write(direction);     // set RightMotor backward mode
+    PWM_WriteCompare1(l_speed); 
+    PWM_WriteCompare2(r_speed); 
+    vTaskDelay(delay);    
+    
+    MotorDirLeft_Write(0);
+    MotorDirRight_Write(0);
+}
 
 #if 0
 // Name and age
@@ -474,15 +526,6 @@ void zmain(void)
     }
  }   
 #endif
-
-void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
-{
-    MotorDirLeft_Write(direction);      // set LeftMotor backward mode
-    MotorDirRight_Write(direction);     // set RightMotor backward mode
-    PWM_WriteCompare1(l_speed); 
-    PWM_WriteCompare2(r_speed); 
-    vTaskDelay(delay);    
-}
 
 float battery_voltage()
 {

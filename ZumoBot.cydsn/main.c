@@ -93,7 +93,7 @@ int zmain(void)
     
     for (;;) {                 
         float voltage = battery_voltage();
-        printf("The voltage is: %.2f V\n", voltage);
+        //printf("The voltage is: %.2f V\n", voltage);
                  
         if (voltage < 4.0) {
             confirm_low_voltage = 0;
@@ -117,7 +117,8 @@ void check_age()
     scanf("%d", &age);
     TickType_t time_end = xTaskGetTickCount();
     
-    double time = (time_end - time_start) * 0.001; //TODO: add time
+    double time = (time_end - time_start) * 0.001;
+    printf("Time: %.2f\n", time);
     
     if (age <= 21) {
         if (time < 3) {

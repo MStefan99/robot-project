@@ -82,6 +82,7 @@ int zmain(void)
     Button_isr_StartEx(Button_Interrupt);
     CyGlobalIntEnable; /* Enable global interrupts. */
 
+    PWM_1_Start();
     UART_1_Start();    
     ADC_Battery_Start();
     ADC_Battery_StartConvert();
@@ -118,6 +119,34 @@ void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay
     MotorDirLeft_Write(0);
     MotorDirRight_Write(0);
 }
+
+float battery_voltage()
+{
+    float result = 0;
+    
+    ADC_Battery_IsEndConversion(ADC_Battery_WAIT_FOR_RESULT);
+    int16_t adc_value = ADC_Battery_GetResult16();
+    
+    result = adc_value * battery_voltage_convertion_coeffitient * level_convert_coefficient;
+
+    return result;
+}
+
+void led_blink(uint8 mode, uint32 duration){
+    if (mode){        
+        PWM_1_WriteCompare(16);
+        vTaskDelay(duration/4);
+        PWM_1_WriteCompare(192);
+        vTaskDelay(duration/4);
+        PWM_1_WriteCompare(64);
+        vTaskDelay(duration/4);
+        PWM_1_WriteCompare(255);
+        vTaskDelay(duration/4);
+    } else {
+        PWM_1_WriteCompare(0);
+    }
+}
+
 
 #if 0
 // Name and age
@@ -486,29 +515,4 @@ void zmain(void)
  }   
 #endif
 
-float battery_voltage()
-{
-    float result = 0;
-    
-    ADC_Battery_IsEndConversion(ADC_Battery_WAIT_FOR_RESULT);
-    int16_t adc_value = ADC_Battery_GetResult16();
-    
-    result = adc_value * battery_voltage_convertion_coeffitient * level_convert_coefficient;
-
-    return result;
-}
-
-void led_blink(uint8 mode, uint32 duration){
-    uint8 state=0;
-    if (mode){        
-        BatteryLed_Write(state);
-        vTaskDelay(duration/2);
-        state = !state;
-        BatteryLed_Write(state);
-        vTaskDelay(duration/2);
-    } else {
-        BatteryLed_Write(0);
-    }
-}
-    
 /* [] END OF FILE */

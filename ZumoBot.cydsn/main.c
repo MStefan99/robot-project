@@ -57,20 +57,20 @@
 
 const float battery_voltage_convertion_coeffitient = 1.5;
 const float level_convert_coefficient = 5.0/4095.0;
-uint8 confirm_low_voltage = 1; // TODO MStefan99: Cleanup
+uint8 led_state = 0; // TODO MStefan99: Cleanup
 
 float battery_voltage();
-void led_blink(uint8 mode, uint32 duration);
+void led_set(uint8 mode);
 
 // Does the tank turn of the robot 
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
 
-CY_ISR_PROTO(Button_Interrupt);
+CY_ISR_PROTO(timer_Interrupt);
 
-CY_ISR(Button_Interrupt)
+CY_ISR(timer_Interrupt)
 {    
-    confirm_low_voltage = 1; 
-    SW1_ClearInterrupt();    
+    led_state = !led_state; 
+    Timer_1_ClearFIFO();
 }
 
 
@@ -79,27 +79,21 @@ CY_ISR(Button_Interrupt)
 int zmain(void)
 {
    
-    Button_isr_StartEx(Button_Interrupt);
+    
+    timer_isr_StartEx(timer_Interrupt);
     CyGlobalIntEnable; /* Enable global interrupts. */
-
+    
+    Timer_1_Start();
     UART_1_Start();    
     ADC_Battery_Start();
     ADC_Battery_StartConvert();
     
-    printf("Interrupt test...\n");
-    
-    for (;;) {                 
-        float voltage = battery_voltage();
-        printf("The voltage is: %.2f V\n", voltage);
-                 
-        if (voltage < 4.0) {
-            confirm_low_voltage = 0;
-        }
+    for (;;) {   
         
-        if (!confirm_low_voltage) {
-            led_blink(1, 1000);
+        if (led_state) {
+            led_set(1);
         } else {
-            led_blink(0, 1000);
+            led_set(0);
         }        
     }        
     
@@ -117,6 +111,28 @@ void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay
     
     MotorDirLeft_Write(0);
     MotorDirRight_Write(0);
+}
+
+float battery_voltage()
+{
+    float result = 0;
+    
+    ADC_Battery_IsEndConversion(ADC_Battery_WAIT_FOR_RESULT);
+    int16_t adc_value = ADC_Battery_GetResult16();
+    
+    result = adc_value * battery_voltage_convertion_coeffitient * level_convert_coefficient;
+
+    return result;
+}
+
+void led_set(uint8 mode){
+   printf("Timer count: %d\n", Timer_1_ReadCounter());
+    if (mode){        
+        
+        BatteryLed_Write(1);
+    } else {
+        BatteryLed_Write(0);
+    }
 }
 
 #if 0
@@ -486,29 +502,6 @@ void zmain(void)
  }   
 #endif
 
-float battery_voltage()
-{
-    float result = 0;
-    
-    ADC_Battery_IsEndConversion(ADC_Battery_WAIT_FOR_RESULT);
-    int16_t adc_value = ADC_Battery_GetResult16();
-    
-    result = adc_value * battery_voltage_convertion_coeffitient * level_convert_coefficient;
 
-    return result;
-}
-
-void led_blink(uint8 mode, uint32 duration){
-    uint8 state=0;
-    if (mode){        
-        BatteryLed_Write(state);
-        vTaskDelay(duration/2);
-        state = !state;
-        BatteryLed_Write(state);
-        vTaskDelay(duration/2);
-    } else {
-        BatteryLed_Write(0);
-    }
-}
     
 /* [] END OF FILE */

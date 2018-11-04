@@ -59,8 +59,9 @@
 const float battery_voltage_convertion_coeffitient = 1.5;
 const float level_convert_coefficient = 5.0/4095.0;
 uint8 confirm_low_voltage = 1; // TODO MStefan99: Cleanup
-
 float battery_voltage();
+struct accData_ acceleration;
+
 void led_blink(uint8 mode, uint32 duration);
 
 // Does the tank turn of the robot 
@@ -85,6 +86,7 @@ int zmain(void)
     CyGlobalIntEnable; /* Enable global interrupts. */
 
     UART_1_Start();    
+    LSM303D_Start();
     ADC_Battery_Start();
     ADC_Battery_StartConvert();
     
@@ -92,16 +94,19 @@ int zmain(void)
     
     for (;;) {                 
         float voltage = battery_voltage();
-        printf("The voltage is: %.2f V\n", voltage);
+        //printf("The voltage is: %.2f V\n", voltage);
                  
         if (voltage < 4.0) {
             confirm_low_voltage = 0;
         }
         
+        LSM303D_Read_Acc(&acceleration);
+        printf("%10d %10d %10d\n",acceleration.accX, acceleration.accY, acceleration.accZ);
+        
         if (!confirm_low_voltage) {
-            led_blink(1, 1000);
+            //led_blink(1, 1000);
         } else {
-            led_blink(0, 1000);
+            //led_blink(0, 1000);
         }   
     }        
     

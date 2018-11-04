@@ -62,8 +62,19 @@ uint8 confirm_low_voltage = 1; // TODO MStefan99: Cleanup
 float battery_voltage();
 void led_blink(uint8 mode, uint32 duration);
 
-// Does the tank turn of the robot 
+// Does the tank turn of the robot. Allowed modes for direction: 0 (left), 1 (right).
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
+
+/* Sets the direction of the motors. Allowed values for mode: 0-3.
+    Possible modes: 0 - both forward; 3 - both backward; 
+    1 - left backward, right forward (left turn); 2 - left forward, right backward (right turn). */
+void motor_set(uint8 mode);
+
+// Sets the motors to run continiously with the desired speeds.
+void motor_run(uint8 l_speed, uint8 r_speed);
+
+// Brings the motors to stop.
+void motor_halt();
 
 CY_ISR_PROTO(Button_Interrupt);
 
@@ -106,7 +117,6 @@ int zmain(void)
     return 0;
 }
 
-//1 - right, 0 - left
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
 {
     MotorDirLeft_Write(!direction);      // set LeftMotor backward mode
@@ -117,6 +127,21 @@ void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay
     
     MotorDirLeft_Write(0);
     MotorDirRight_Write(0);
+}
+
+void motor_set(uint8 mode){
+    MotorDirLeft_Write(mode & 0x1);
+    MotorDirRight_Write(mode>>1 & 0x1);
+}
+
+void motor_run(uint8 l_speed, uint8 r_speed){
+    PWM_WriteCompare1(l_speed); 
+    PWM_WriteCompare2(r_speed);
+}
+
+void motor_halt(){
+    PWM_WriteCompare1(0); 
+    PWM_WriteCompare2(0);
 }
 
 #if 0

@@ -58,6 +58,8 @@
 const float battery_voltage_convertion_coeffitient = 1.5;
 const float level_convert_coefficient = 5.0/4095.0;
 uint8 confirm_low_voltage = 1; // TODO MStefan99: Cleanup
+int16 diff;
+int8 delta;
 
 float battery_voltage();
 void led_blink(uint8 mode, uint32 duration);
@@ -70,6 +72,9 @@ void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay
     1 - left backward, right forward (left turn); 2 - left forward, right backward (right turn). */
 void motor_set(uint8 mode);
 
+// Turns the robot on a maximum speed using differential
+void motor_turn_diff(int8 diff);
+
 // Sets the motors to run continiously with the desired speeds.
 void motor_run(uint8 l_speed, uint8 r_speed);
 
@@ -77,13 +82,23 @@ void motor_run(uint8 l_speed, uint8 r_speed);
 void motor_halt();
 
 CY_ISR_PROTO(Button_Interrupt);
+CY_ISR_PROTO(Motor_Increment_ISR);
 
 CY_ISR(Button_Interrupt)
 {    
     confirm_low_voltage = 1; 
     SW1_ClearInterrupt();    
 }
-
+CY_ISR(Motor_Increment_ISR){
+    if(diff > -257 || diff < 256){
+    diff+=delta;    
+    } else if (diff < -256){
+    diff = -256;
+    } else {
+    diff = 255;
+    }
+    Motor_Increment_Control_ClearFIFO();
+}
 
 
 
@@ -132,6 +147,16 @@ void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay
 void motor_set(uint8 mode){
     MotorDirLeft_Write(mode & 0x1);
     MotorDirRight_Write(mode>>1 & 0x1);
+}
+
+void motor_turn_diff(int8 diff){
+    uint8 l_speed = 255;
+    uint8 r_speed = 255;
+    if (diff > 0){
+        r_speed -= diff;
+    } else {
+        l_speed += diff;
+    }
 }
 
 void motor_run(uint8 l_speed, uint8 r_speed){

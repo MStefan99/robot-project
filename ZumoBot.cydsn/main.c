@@ -58,6 +58,7 @@
 const float battery_voltage_convertion_coeffitient = 1.5;
 const float level_convert_coefficient = 5.0/4095.0;
 uint8 confirm_low_voltage = 1; // TODO MStefan99: Cleanup
+struct sensors_ reflectance_values;
 
 float battery_voltage();
 void led_blink(uint8 mode, uint32 duration);
@@ -82,6 +83,7 @@ int zmain(void)
     Button_isr_StartEx(Button_Interrupt);
     CyGlobalIntEnable; /* Enable global interrupts. */
 
+    reflectance_start();
     UART_1_Start();    
     ADC_Battery_Start();
     ADC_Battery_StartConvert();
@@ -90,11 +92,15 @@ int zmain(void)
     
     for (;;) {                 
         float voltage = battery_voltage();
-        printf("The voltage is: %.2f V\n", voltage);
                  
         if (voltage < 4.0) {
             confirm_low_voltage = 0;
         }
+        
+        reflectance_read(&reflectance_values);
+        printf("Sensor l3: %d\nSensor l2: %d\nSensor l1: %d\nSensor r1: %d\nSensor r2: %d\nSensor r3: %d\n\n",\
+            reflectance_values.l3, reflectance_values.l2, reflectance_values.l1,\
+            reflectance_values.r1, reflectance_values.r2, reflectance_values.r3);
         
         if (!confirm_low_voltage) {
             led_blink(1, 1000);

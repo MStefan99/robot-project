@@ -54,23 +54,31 @@
  * @brief   
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
+struct sensors_difference_{
+    int16 sensor1;
+    int16 sensor2;
+    int16 sensor3;    
+};
 
 const float battery_voltage_convertion_coeffitient = 1.5;
 const float level_convert_coefficient = 5.0/4095.0;
-uint8 confirm_low_voltage = 1; // TODO MStefan99: Cleanup
+uint8 button_mode = 0; // TODO MStefan99: Cleanup
+struct sensors_difference_ reflectance_offset;
 struct sensors_ reflectance_values;
 
-float battery_voltage();
-void led_blink(uint8 mode, uint32 duration);
-
-// Does the tank turn of the robot 
-void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
+struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings);
+void reflectance_normalize(struct sensors_ *ref_readings);
+void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay); // Does the tank turn of the robot 
+float battery_voltage(); // Returns the battery voltage 
+bool voltage_test(); // Returns true if voltage is sufficient and false if 
 
 CY_ISR_PROTO(Button_Interrupt);
 
 CY_ISR(Button_Interrupt)
 {    
-    confirm_low_voltage = 1; 
+    reflectance_read(&reflectance_values);
+    reflectance_offset = reflectance_calibrate(&reflectance_values);
+    button_mode = 1;    
     SW1_ClearInterrupt();    
 }
 
@@ -78,51 +86,77 @@ CY_ISR(Button_Interrupt)
 
 
 int zmain(void)
-{
-   
+{    
+        
     Button_isr_StartEx(Button_Interrupt);
     CyGlobalIntEnable; /* Enable global interrupts. */
 
     reflectance_start();
     UART_1_Start();    
     ADC_Battery_Start();
-    ADC_Battery_StartConvert();
+    ADC_Battery_StartConvert();    
+    printf("Program initialized\n");
     
-    printf("Interrupt test...\n");
-    
-    for (;;) {                 
-        float voltage = battery_voltage();
-                 
-        if (voltage < 4.0) {
-            confirm_low_voltage = 0;
-        }
+    for (;;) {     
+        
+        if(!voltage_test()){
+            printf("Low voltage detected! Program will not continue unless sufficient voltage supplied.\n");
+            vTaskDelay(1000);
+            continue;
+        } 
         
         reflectance_read(&reflectance_values);
-        printf("Sensor l3: %d\nSensor l2: %d\nSensor l1: %d\nSensor r1: %d\nSensor r2: %d\nSensor r3: %d\n\n",\
-            reflectance_values.l3, reflectance_values.l2, reflectance_values.l1,\
-            reflectance_values.r1, reflectance_values.r2, reflectance_values.r3);
+        reflectance_normalize(&reflectance_values);        
+    }
+}
+
+bool voltage_test(){
+    float voltage = battery_voltage();
         
-        if (!confirm_low_voltage) {
-            led_blink(1, 1000);
-        } else {
-            led_blink(0, 1000);
-        }        
-    }        
-    
-    return 0;
+    if (voltage > 4.0) {
+        return true;
+    } else {
+        return false;
+    } 
 }
 
 //1 - right, 0 - left
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
 {
-    MotorDirLeft_Write(!direction);      // set LeftMotor backward mode
-    MotorDirRight_Write(direction);     // set RightMotor backward mode
+    MotorDirLeft_Write(!direction);      // set left motor direction
+    MotorDirRight_Write(direction);     // set right motor direction
     PWM_WriteCompare1(l_speed); 
     PWM_WriteCompare2(r_speed); 
     vTaskDelay(delay);    
     
     MotorDirLeft_Write(0);
     MotorDirRight_Write(0);
+}
+
+float battery_voltage()
+{
+    float result = 0;
+    
+    ADC_Battery_IsEndConversion(ADC_Battery_WAIT_FOR_RESULT);
+    int16_t adc_value = ADC_Battery_GetResult16();
+    
+    result = adc_value * battery_voltage_convertion_coeffitient * level_convert_coefficient;
+
+    return result;
+}
+
+struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings){
+    struct sensors_difference_ sensor_diff;
+    sensor_diff.sensor1 = ref_readings->r1 - ref_readings->l1; 
+    sensor_diff.sensor2 = ref_readings->r2 - ref_readings->l2; 
+    sensor_diff.sensor3 = ref_readings->r3 - ref_readings->l3; 
+    return sensor_diff;
+}
+
+void reflectance_normalize(struct sensors_ *ref_readings){
+    ref_readings->r1 -= reflectance_offset.sensor1;
+    ref_readings->r2 -= reflectance_offset.sensor2;
+    ref_readings->r3 -= reflectance_offset.sensor3;
 }
 
 #if 0
@@ -491,30 +525,5 @@ void zmain(void)
     }
  }   
 #endif
-
-float battery_voltage()
-{
-    float result = 0;
-    
-    ADC_Battery_IsEndConversion(ADC_Battery_WAIT_FOR_RESULT);
-    int16_t adc_value = ADC_Battery_GetResult16();
-    
-    result = adc_value * battery_voltage_convertion_coeffitient * level_convert_coefficient;
-
-    return result;
-}
-
-void led_blink(uint8 mode, uint32 duration){
-    uint8 state=0;
-    if (mode){        
-        BatteryLed_Write(state);
-        vTaskDelay(duration/2);
-        state = !state;
-        BatteryLed_Write(state);
-        vTaskDelay(duration/2);
-    } else {
-        BatteryLed_Write(0);
-    }
-}
     
 /* [] END OF FILE */

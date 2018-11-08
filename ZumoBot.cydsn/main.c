@@ -75,12 +75,12 @@ CY_ISR(Button_Interrupt)
 
 
 
-
+/*
 int zmain(void)
 {
    
     Button_isr_StartEx(Button_Interrupt);
-    CyGlobalIntEnable; /* Enable global interrupts. */
+    CyGlobalIntEnable; 
 
     UART_1_Start();    
     ADC_Battery_Start();
@@ -104,7 +104,44 @@ int zmain(void)
     }        
     
     return 0;
-}
+}*/
+
+void zmain(void)
+{
+    struct accData_ data;
+    
+    printf("Accelerometer test...\n");
+
+    if(!LSM303D_Start()){
+        printf("LSM303D failed to initialize!!! Program is Ending!!!\n");
+        vTaskSuspend(NULL);
+    }
+    else {
+        printf("Device Ok...\n");
+    }
+    
+    
+    motor_start();
+    motor_forward(0, 0);
+    
+    float threshold = -15000;
+    
+    for(;;)
+    {
+        LSM303D_Read_Acc(&data);
+        printf("%8d %8d %8d\n",data.accX, data.accY, data.accZ);
+        
+        if (data.accX <= threshold) {
+            //turn
+            //turn right at place
+            motor_tank_turn(1, 200, 200, 240);
+            motor_forward(0, 500);
+        } else {
+            motor_turn(150, 150, 0);
+        }
+    }
+ }
+
 
 //1 - right, 0 - left
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)

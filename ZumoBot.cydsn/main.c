@@ -47,6 +47,7 @@
 #include <sys/time.h>
 #include "serial1.h"
 #include <unistd.h>
+#include <stdlib.h>
 
 #include <stdarg.h>
 /**
@@ -61,6 +62,7 @@ uint8 confirm_low_voltage = 1; // TODO MStefan99: Cleanup
 
 float battery_voltage();
 void led_blink(uint8 mode, uint32 duration);
+int get_turn_direction();
 
 // Does the tank turn of the robot 
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
@@ -142,6 +144,17 @@ void zmain(void)
     }
  }
 
+//0 - left, 1 - right
+int get_turn_direction() {
+    int random_direction = rand() % 2;
+    if (random_direction) {
+        printf("Right\n");
+    } else {
+        printf("Left\n");
+    }
+        
+    return random_direction;
+}
 
 //1 - right, 0 - left
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)

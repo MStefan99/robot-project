@@ -131,12 +131,18 @@ void zmain(void)
     for(;;)
     {
         LSM303D_Read_Acc(&data);
-        printf("%8d %8d %8d\n",data.accX, data.accY, data.accZ);
+        //printf("%8d %8d %8d\n",data.accX, data.accY, data.accZ);
         
         if (data.accX <= threshold) {
-            //turn
-            //turn right at place
-            motor_tank_turn(1, 200, 200, 240);
+            int result = get_turn_direction();
+            if (result == 1) { 
+                //turn right
+                motor_tank_turn(1, 250, 200, 240);
+            } else { 
+                //left
+                motor_tank_turn(250, 1, 200, 240);
+            }
+           
             motor_forward(0, 500);
         } else {
             motor_turn(150, 150, 0);

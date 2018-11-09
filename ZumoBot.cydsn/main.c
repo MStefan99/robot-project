@@ -55,11 +55,24 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
+
 struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings); // Sets the calibration between right and left sensors
 int16 reflectance_normalize(struct sensors_ *ref_readings, struct sensors_difference_ *ref_offset); // Edits the reflectance readings according to previous calibration
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay); // Does the tank turn of the robot 
 float battery_voltage(); // Returns the battery voltage 
 bool voltage_test(); // Returns true if voltage is sufficient and false if not
+
+
+// Does the tank turn of the robot. Allowed modes for direction: 0 (left), 1 (right).
+void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
+
+/* Sets the direction of the motors. Allowed values for mode: 0-3.
+    Possible modes: 0 - both forward; 3 - both backward; 
+    1 - left backward, right forward (left turn); 2 - left forward, right backward (right turn). */
+void motor_set(uint8 mode);
+
+// Turns the robot on a maximum speed using speed difference
+void motor_turn_diff(int16 diff);
 
 CY_ISR_PROTO(Button_Interrupt);
 
@@ -74,7 +87,6 @@ CY_ISR(Button_Interrupt)
 
 int zmain(void)
 {    
-    int16 motor_speed_delta;
     reflectance_offset_ reflectance_offset={0,0,0};
     struct sensors_ reflectance_values;
     int shift;
@@ -108,6 +120,7 @@ int zmain(void)
     }
 }
 
+
 bool voltage_test()
 {
     float voltage = battery_voltage();
@@ -117,6 +130,19 @@ bool voltage_test()
     } else {
         return false;
     } 
+}
+
+//1 - right, 0 - left
+void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
+{
+    MotorDirLeft_Write(!direction);      // set left motor direction
+    MotorDirRight_Write(direction);     // set right motor direction
+    PWM_WriteCompare1(l_speed); 
+    PWM_WriteCompare2(r_speed); 
+    vTaskDelay(delay);    
+    
+    MotorDirLeft_Write(0);
+    MotorDirRight_Write(0);
 }
 
 float battery_voltage()
@@ -150,6 +176,23 @@ int16 reflectance_normalize(struct sensors_ *ref_readings, struct sensors_differ
     /* returns the amount of shift from the line calculated as follows:
        ((r3 - l3) / 10) + ((r2 - l2) / 30) + ((r1 - l1) / 50) */
     return (ref_readings->r3 - ref_readings->l3) / 10 + (ref_readings->r2 - ref_readings->l2) / 30 + (ref_readings->r1 - ref_readings->l1) / 50;
+}
+
+void motor_set(uint8 mode){
+    MotorDirLeft_Write(mode & 0x1);
+    MotorDirRight_Write(mode>>1 & 0x1);
+}
+
+void motor_turn_diff(int16 diff){
+    uint8 l_speed = 255;
+    uint8 r_speed = 255;
+    if (diff > 0 && diff < 255){
+        r_speed -= diff;
+    } else {
+        l_speed += diff;
+    }
+    PWM_WriteCompare1(l_speed); 
+    PWM_WriteCompare2(r_speed);
 }
 
 #if 0

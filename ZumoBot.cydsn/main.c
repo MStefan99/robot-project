@@ -47,39 +47,26 @@
 #include <sys/time.h>
 #include "serial1.h"
 #include <unistd.h>
+#include <main.h>
 
-#include <stdarg.h>
 /**
  * @file    main.c
  * @brief   
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
-struct sensors_difference_{
-    int16 sensor1;
-    int16 sensor2;
-    int16 sensor3;    
-};
 
-const float battery_voltage_convertion_coeffitient = 1.5;
-const float level_convert_coefficient = 5.0/4095.0;
-uint8 button_mode = 0; // TODO MStefan99: Cleanup
-struct sensors_difference_ reflectance_offset;
-struct sensors_ reflectance_values;
-
-struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings);
-void reflectance_normalize(struct sensors_ *ref_readings);
+struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings); // Sets the calibration between right and left sensors
+int16 reflectance_normalize(struct sensors_ *ref_readings, struct sensors_difference_ *ref_offset); // Edits the reflectance readings according to previous calibration
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay); // Does the tank turn of the robot 
 float battery_voltage(); // Returns the battery voltage 
-bool voltage_test(); // Returns true if voltage is sufficient and false if 
+bool voltage_test(); // Returns true if voltage is sufficient and false if not
 
 CY_ISR_PROTO(Button_Interrupt);
 
 CY_ISR(Button_Interrupt)
-{    
-    reflectance_read(&reflectance_values);
-    reflectance_offset = reflectance_calibrate(&reflectance_values);
-    button_mode = 1;    
-    SW1_ClearInterrupt();    
+{
+    calibration_mode = true;
+    SW1_ClearInterrupt();
 }
 
 
@@ -87,30 +74,42 @@ CY_ISR(Button_Interrupt)
 
 int zmain(void)
 {    
-        
-    Button_isr_StartEx(Button_Interrupt);
+    int16 motor_speed_delta;
+    reflectance_offset_ reflectance_offset={0,0,0};
+    struct sensors_ reflectance_values;
+    int shift;
+    
     CyGlobalIntEnable; /* Enable global interrupts. */
-
+    Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
+    
     reflectance_start();
     UART_1_Start();    
     ADC_Battery_Start();
     ADC_Battery_StartConvert();    
     printf("Program initialized\n");
     
-    for (;;) {     
+    for (;;) {  
         
         if(!voltage_test()){
             printf("Low voltage detected! Program will not continue unless sufficient voltage supplied.\n");
+            PWM_Stop();
             vTaskDelay(1000);
             continue;
+        }
+        
+        if(calibration_mode){
+            reflectance_read(&reflectance_values);
+            reflectance_offset = reflectance_calibrate(&reflectance_values);
+            calibration_mode=false;
         } 
         
         reflectance_read(&reflectance_values);
-        reflectance_normalize(&reflectance_values);        
+        shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
     }
 }
 
-bool voltage_test(){
+bool voltage_test()
+{
     float voltage = battery_voltage();
         
     if (voltage > 4.0) {
@@ -120,22 +119,11 @@ bool voltage_test(){
     } 
 }
 
-//1 - right, 0 - left
-void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
-{
-    MotorDirLeft_Write(!direction);      // set left motor direction
-    MotorDirRight_Write(direction);     // set right motor direction
-    PWM_WriteCompare1(l_speed); 
-    PWM_WriteCompare2(r_speed); 
-    vTaskDelay(delay);    
-    
-    MotorDirLeft_Write(0);
-    MotorDirRight_Write(0);
-}
-
 float battery_voltage()
 {
     float result = 0;
+    const float battery_voltage_convertion_coeffitient = 1.5;
+    const float level_convert_coefficient = 5.0/4095.0;
     
     ADC_Battery_IsEndConversion(ADC_Battery_WAIT_FOR_RESULT);
     int16_t adc_value = ADC_Battery_GetResult16();
@@ -145,7 +133,8 @@ float battery_voltage()
     return result;
 }
 
-struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings){
+struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings)
+{
     struct sensors_difference_ sensor_diff;
     sensor_diff.sensor1 = ref_readings->r1 - ref_readings->l1; 
     sensor_diff.sensor2 = ref_readings->r2 - ref_readings->l2; 
@@ -153,10 +142,14 @@ struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings){
     return sensor_diff;
 }
 
-void reflectance_normalize(struct sensors_ *ref_readings){
-    ref_readings->r1 -= reflectance_offset.sensor1;
-    ref_readings->r2 -= reflectance_offset.sensor2;
-    ref_readings->r3 -= reflectance_offset.sensor3;
+int16 reflectance_normalize(struct sensors_ *ref_readings, struct sensors_difference_ *ref_offset)
+{
+    ref_readings->r1 -= ref_offset->sensor1;
+    ref_readings->r2 -= ref_offset->sensor2;
+    ref_readings->r3 -= ref_offset->sensor3;
+    /* returns the amount of shift from the line calculated as follows:
+       ((r3 - l3) / 10) + ((r2 - l2) / 30) + ((r1 - l1) / 50) */
+    return (ref_readings->r3 - ref_readings->l3) / 10 + (ref_readings->r2 - ref_readings->l2) / 30 + (ref_readings->r1 - ref_readings->l1) / 50;
 }
 
 #if 0

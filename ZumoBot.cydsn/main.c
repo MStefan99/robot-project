@@ -75,10 +75,12 @@ void motor_set(uint8 mode);
 // Turns the robot with a desired speed speed using speed difference
 void motor_turn_diff(uint8 speed, int16 diff);
 
+bool movement_allowed = false;
 CY_ISR_PROTO(Button_Interrupt);
 
 CY_ISR(Button_Interrupt)
 {
+    movement_allowed = true;
     calibration_mode = true;
     SW1_ClearInterrupt();
 }
@@ -88,10 +90,10 @@ CY_ISR(Button_Interrupt)
 
 int zmain(void)
 {    
-    reflectance_offset_ reflectance_offset={0,0,0};
+    reflectance_offset_ reflectance_offset = {0,0,0};
     struct sensors_ reflectance_values;
-    bool reflectance_black;
-    uint8_t line_count=0;
+    bool reflectance_black = false;
+    uint8_t line_count = 0;
     int shift;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
@@ -113,17 +115,9 @@ int zmain(void)
             continue;
         }
         
-        if(line_count > 3){
-        motor_forward(0,0);
-        } else {
-        motor_forward(100,0);
-        }
-        
-        
         if(!line_detect()){
             if(reflectance_black){
-                printf("Line detect: %d\n", ++line_count);
-                
+                ++line_count;
             }
             reflectance_black = false;
         } else {
@@ -138,6 +132,14 @@ int zmain(void)
         
         reflectance_read(&reflectance_values);
         shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
+        
+        if(movement_allowed){
+            if(line_count > 3){
+                motor_forward(0,0);
+            } else {
+                motor_turn_diff(100, shift);
+            } 
+        }
     }
 }
 
@@ -206,7 +208,7 @@ int16 reflectance_normalize(struct sensors_ *ref_readings, struct sensors_differ
     ref_readings->r3 -= ref_offset->sensor3;
     /* returns the amount of shift from the line calculated as follows:
        ((r3 - l3) / 10) + ((r2 - l2) / 30) + ((r1 - l1) / 50) */
-    return (ref_readings->r3 - ref_readings->l3) / 10 + (ref_readings->r2 - ref_readings->l2) / 30 + (ref_readings->r1 - ref_readings->l1) / 50;
+    return ((ref_readings->r3 - ref_readings->l3) + (ref_readings->r2 - ref_readings->l2) / 3 + (ref_readings->r1 - ref_readings->l1) / 5)/130;
 }
 
 void motor_set(uint8 mode){
@@ -225,9 +227,9 @@ void motor_turn_diff(uint8 speed, int16 diff){
         }
     } else {
         if (diff > 0){
-           r_speed -= diff;
+           r_speed -= diff*speed/255;
        } else {
-           l_speed += diff;
+           l_speed += diff*speed/255;
        }
     }
     

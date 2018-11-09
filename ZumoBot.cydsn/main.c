@@ -61,6 +61,7 @@ int16 reflectance_normalize(struct sensors_ *ref_readings, struct sensors_differ
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay); // Does the tank turn of the robot 
 float battery_voltage(); // Returns the battery voltage 
 bool voltage_test(); // Returns true if voltage is sufficient and false if not
+bool line_detect();
 
 
 // Does the tank turn of the robot. Allowed modes for direction: 0 (left), 1 (right).
@@ -71,8 +72,8 @@ void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay
     1 - left backward, right forward (left turn); 2 - left forward, right backward (right turn). */
 void motor_set(uint8 mode);
 
-// Turns the robot on a maximum speed using speed difference
-void motor_turn_diff(int16 diff);
+// Turns the robot with a desired speed speed using speed difference
+void motor_turn_diff(uint8 speed, int16 diff);
 
 CY_ISR_PROTO(Button_Interrupt);
 
@@ -89,6 +90,8 @@ int zmain(void)
 {    
     reflectance_offset_ reflectance_offset={0,0,0};
     struct sensors_ reflectance_values;
+    bool reflectance_black;
+    uint8_t line_count=0;
     int shift;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
@@ -99,6 +102,7 @@ int zmain(void)
     ADC_Battery_Start();
     ADC_Battery_StartConvert();    
     printf("Program initialized\n");
+    PWM_Start();
     
     for (;;) {  
         
@@ -107,6 +111,23 @@ int zmain(void)
             PWM_Stop();
             vTaskDelay(1000);
             continue;
+        }
+        
+        if(line_count > 3){
+        motor_forward(0,0);
+        } else {
+        motor_forward(100,0);
+        }
+        
+        
+        if(!line_detect()){
+            if(reflectance_black){
+                printf("Line detect: %d\n", ++line_count);
+                
+            }
+            reflectance_black = false;
+        } else {
+            reflectance_black = true;
         }
         
         if(calibration_mode){
@@ -125,11 +146,21 @@ bool voltage_test()
 {
     float voltage = battery_voltage();
         
-    if (voltage > 4.0) {
+    if (voltage > 3.8) {
         return true;
     } else {
         return false;
     } 
+}
+
+bool line_detect(){
+struct sensors_ ref_readings;
+const uint16_t threshold=20000;
+    reflectance_read(&ref_readings);
+    if(ref_readings.l3 + ref_readings.l2 + ref_readings.l1 + ref_readings.r1 + ref_readings.r2 + ref_readings.r3 > threshold * 6){
+        return true;
+    }
+    return false;
 }
 
 //1 - right, 0 - left
@@ -183,14 +214,23 @@ void motor_set(uint8 mode){
     MotorDirRight_Write(mode>>1 & 0x1);
 }
 
-void motor_turn_diff(int16 diff){
-    uint8 l_speed = 255;
-    uint8 r_speed = 255;
-    if (diff > 0 && diff < 255){
-        r_speed -= diff;
+void motor_turn_diff(uint8 speed, int16 diff){
+    uint8 l_speed = speed;
+    uint8 r_speed = speed;
+    if (diff > speed || -diff < -speed){
+        if(diff>0){
+            r_speed=0;
+        } else {
+            l_speed=0;
+        }
     } else {
-        l_speed += diff;
+        if (diff > 0){
+           r_speed -= diff;
+       } else {
+           l_speed += diff;
+       }
     }
+    
     PWM_WriteCompare1(l_speed); 
     PWM_WriteCompare2(r_speed);
 }

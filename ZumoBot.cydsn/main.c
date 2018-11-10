@@ -71,10 +71,24 @@ int zmain(void)
             continue;
         }
         
-        if(!cross_detected()){
-            if(reflectance_black){
+        if(!cross_detected()) {
+            if(reflectance_black) {
                 ++line_count;
+                
+                if(movement_allowed) {
+                    if (line_count == 2) {
+                        motor_forward(0,0);
+                        IR_flush();
+                        IR_wait();
+                        motor_turn_diff(100, shift);
+                    } else if(line_count > 5) {
+                        motor_forward(0,0);
+                    } else {
+                        motor_turn_diff(100, shift);
+                    } 
+                }
             }
+            
             reflectance_black = false;
         } else {
             reflectance_black = true;
@@ -88,19 +102,6 @@ int zmain(void)
         
         reflectance_read(&reflectance_values);
         shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
-        
-        
-        if(movement_allowed) {
-            if (line_count == 2) {
-                IR_flush();
-                IR_wait();
-                motor_forward(0,0);
-            } else if(line_count > 5) {
-                motor_forward(0,0);
-            } else {
-                motor_turn_diff(100, shift);
-            } 
-        }
     }
 }
 

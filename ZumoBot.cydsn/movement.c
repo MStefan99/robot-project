@@ -12,6 +12,7 @@
 
 #include <movement.h>
 #include <Motor.h>
+#include <stdlib.h>
 
 void motor_tank_turn(uint8_t direction, uint8_t l_speed, uint8_t r_speed)
 {
@@ -28,7 +29,7 @@ void motor_turn_diff(uint8_t speed, int diff)
 {
     uint8_t l_speed = speed;
     uint8_t r_speed = speed;
-    if (diff > speed || -diff < -speed){
+    if (abs(diff) > speed){
         if(diff>0){
             r_speed=0;
         } else {

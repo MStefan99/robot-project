@@ -55,7 +55,6 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
-
 struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings); // Sets the calibration between right and left sensors
 int16 reflectance_normalize(struct sensors_ *ref_readings, struct sensors_difference_ *ref_offset); // Edits the reflectance readings according to previous calibration
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay); // Does the tank turn of the robot 
@@ -63,14 +62,8 @@ float battery_voltage(); // Returns the battery voltage
 bool voltage_test(); // Returns true if voltage is sufficient and false if not
 bool line_detect();
 
-
 // Does the tank turn of the robot. Allowed modes for direction: 0 (left), 1 (right).
 void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
-
-/* Sets the direction of the motors. Allowed values for mode: 0-3.
-    Possible modes: 0 - both forward; 3 - both backward; 
-    1 - left backward, right forward (left turn); 2 - left forward, right backward (right turn). */
-void motor_set(uint8 mode);
 
 // Turns the robot with a desired speed speed using speed difference
 void motor_turn_diff(uint8 speed, int16 diff);
@@ -209,11 +202,6 @@ int16 reflectance_normalize(struct sensors_ *ref_readings, struct sensors_differ
     /* returns the amount of shift from the line calculated as follows:
        ((r3 - l3) / 10) + ((r2 - l2) / 30) + ((r1 - l1) / 50) */
     return ((ref_readings->r3 - ref_readings->l3) + (ref_readings->r2 - ref_readings->l2) / 3 + (ref_readings->r1 - ref_readings->l1) / 5)/130;
-}
-
-void motor_set(uint8 mode){
-    MotorDirLeft_Write(mode & 0x1);
-    MotorDirRight_Write(mode>>1 & 0x1);
 }
 
 void motor_turn_diff(uint8 speed, int16 diff){

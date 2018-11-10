@@ -19,18 +19,13 @@
 #include <unistd.h>
 #include <voltage.h>
 #include <line_detection.h>
+#include <movement.h>
 
 /**
  * @file    main.c
  * @brief   
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
-
-// Does the tank turn of the robot. Allowed modes for direction: 0 (left), 1 (right).
-void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay);
-
-// Turns the robot with a desired speed speed using speed difference
-void motor_turn_diff(uint8 speed, int16 diff);
 
 bool movement_allowed = false;
 volatile bool calibration_mode = false;
@@ -92,6 +87,8 @@ int zmain(void)
         reflectance_read(&reflectance_values);
         shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
         
+        
+        vTaskDelay(0);
         if(movement_allowed){
             if(line_count > 3){
                 motor_forward(0,0);
@@ -100,39 +97,6 @@ int zmain(void)
             } 
         }
     }
-}
-
-void motor_tank_turn(uint8 direction, uint8 l_speed, uint8 r_speed, uint32 delay)
-{
-    MotorDirLeft_Write(!direction);      // set left motor direction
-    MotorDirRight_Write(direction);     // set right motor direction
-    PWM_WriteCompare1(l_speed); 
-    PWM_WriteCompare2(r_speed); 
-    vTaskDelay(delay);    
-    
-    MotorDirLeft_Write(0);
-    MotorDirRight_Write(0);
-}
-
-void motor_turn_diff(uint8 speed, int16 diff){
-    uint8 l_speed = speed;
-    uint8 r_speed = speed;
-    if (diff > speed || -diff < -speed){
-        if(diff>0){
-            r_speed=0;
-        } else {
-            l_speed=0;
-        }
-    } else {
-        if (diff > 0){
-           r_speed -= diff*speed/255;
-       } else {
-           l_speed += diff*speed/255;
-       }
-    }
-    
-    PWM_WriteCompare1(l_speed); 
-    PWM_WriteCompare2(r_speed);
 }
 
 /* [] END OF FILE */

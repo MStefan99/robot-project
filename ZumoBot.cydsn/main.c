@@ -69,7 +69,7 @@ int zmain(void)
             continue;
         }
         
-        if(!line_detect()){
+        if(!cross_detected()){
             if(reflectance_black){
                 ++line_count;
             }
@@ -81,14 +81,13 @@ int zmain(void)
         if(calibration_mode){
             reflectance_read(&reflectance_values);
             reflectance_offset = reflectance_calibrate(&reflectance_values);
-            calibration_mode=false;
+            calibration_mode = false;
         } 
         
         reflectance_read(&reflectance_values);
         shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
         
         
-        vTaskDelay(0);
         if(movement_allowed){
             if(line_count > 3){
                 motor_forward(0,0);

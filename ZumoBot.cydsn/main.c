@@ -95,7 +95,7 @@ int zmain(void)
                 IR_flush();
                 IR_wait();
                 motor_forward(0,0);
-            } else if(line_count > 5) {
+            } else if(line_count > 4) {
                 motor_forward(0,0);
             } else {
                 motor_turn_diff(100, shift);

@@ -60,6 +60,8 @@ int zmain(void)
     printf("Program initialized\n");
     PWM_Start();
     
+    IR_Start();
+    
     for (;;) {  
         
         if(!voltage_test()){
@@ -88,8 +90,12 @@ int zmain(void)
         shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
         
         
-        if(movement_allowed){
-            if(line_count > 3){
+        if(movement_allowed) {
+            if (line_count == 0) {
+                IR_flush();
+                IR_wait();
+                motor_forward(0,0);
+            } else if(line_count > 5) {
                 motor_forward(0,0);
             } else {
                 motor_turn_diff(100, shift);

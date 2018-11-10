@@ -89,6 +89,17 @@ int zmain(void)
         reflectance_read(&reflectance_values);
         shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
         
+        print_mqtt("Zumo025/log",\
+            "Shift: %d\n"
+            "Sensor l3:%d\n"
+            "Sensor l2:%d\n"
+            "Sensor l1:%d\n",\
+        shift, reflectance_values.l3, reflectance_values.l2, reflectance_values.l1);
+        print_mqtt("Zumo025/log",\
+            "Sensor r1:%d\n"
+            "Sensor r2:%d\n"
+            "Sensor r3:%d\n\n",\
+        reflectance_values.r1, reflectance_values.r2, reflectance_values.r3);
         
         if(movement_allowed) {
             if (line_count == 0) {

@@ -71,29 +71,6 @@ int zmain(void)
             continue;
         }
         
-        if(!cross_detected()) {
-            if(reflectance_black) {
-                ++line_count;
-                
-                if(movement_allowed) {
-                    if (line_count == 2) {
-                        motor_forward(0,0);
-                        IR_flush();
-                        IR_wait();
-                        motor_turn_diff(100, shift);
-                    } else if(line_count > 5) {
-                        motor_forward(0,0);
-                    } else {
-                        motor_turn_diff(100, shift);
-                    } 
-                }
-            }
-            
-            reflectance_black = false;
-        } else {
-            reflectance_black = true;
-        }
-        
         if(calibration_mode){
             reflectance_read(&reflectance_values);
             reflectance_offset = reflectance_calibrate(&reflectance_values);
@@ -102,6 +79,34 @@ int zmain(void)
         
         reflectance_read(&reflectance_values);
         shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
+        
+        bool new_cross_detected = false;
+        if(!cross_detected()) {
+            if(reflectance_black) {
+                ++line_count;
+                new_cross_detected = true;
+            }
+            reflectance_black = false;
+        } else {
+            reflectance_black = true;
+        }  
+        
+        if (movement_allowed) {
+            if (new_cross_detected && line_count == 2) {
+                motor_forward(0,0);
+                
+                IR_flush();
+                IR_wait();
+                
+                motor_turn_diff(100, shift);
+                new_cross_detected = false;
+            } else if (line_count > 5) {
+                motor_forward(0,0);
+            } else {
+                motor_turn_diff(100, shift);
+                new_cross_detected = false;
+            }
+        }
     }
 }
 

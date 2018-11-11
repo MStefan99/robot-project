@@ -11,6 +11,7 @@
 */
 
 #include "line_detection.h"
+#include <stdio.h>
 
 bool cross_detected() {
     struct sensors_ ref_readings;
@@ -32,14 +33,24 @@ struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings)
     return sensor_diff;
 }
 
-int16_t reflectance_normalize(struct sensors_ *ref_readings, struct sensors_difference_ *ref_offset)
+void reflectance_normalize(struct sensors_ *ref_readings, struct sensors_difference_ *ref_offset)
 {
     ref_readings->r1 -= ref_offset->sensor1;
     ref_readings->r2 -= ref_offset->sensor2;
     ref_readings->r3 -= ref_offset->sensor3;
-    /* returns the amount of shift from the line calculated as follows:
-       ((r3 - l3) + ((r2 - l2) / 3) + ((r1 - l1) / 5)) / 150 */
-    return ((ref_readings->r3 - ref_readings->l3) + (ref_readings->r2 - ref_readings->l2) / 3 + (ref_readings->r1 - ref_readings->l1) / 5)/150;
+}
+
+int get_offset(struct sensors_ *ref_readings){
+     /* returns the amount of shift from the line calculated as follows:
+       ((r3 - l3) + ((r2 - l2) / 3) + ((r1 - l1) / 5)) / 115 */
+    return ((ref_readings->r3 - ref_readings->l3) + (ref_readings->r2 - ref_readings->l2) / 3 + (ref_readings->r1 - ref_readings->l1) / 5) / 115;
+}
+
+int get_offset_change(struct sensors_ *ref_readings, uint8_t current_speed){
+    static int previous_offset;
+    int offset_change = (get_offset(ref_readings) - previous_offset) * current_speed / 512;
+    previous_offset = get_offset(ref_readings);
+    return offset_change;
 }
 
 /* [] END OF FILE */

@@ -48,7 +48,8 @@ int zmain(void)
     struct sensors_ reflectance_values;
     bool reflectance_black = false;
     uint8_t line_count = 0;
-    int shift;
+    const uint8_t speed = 100;
+    int line_shift;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -85,14 +86,14 @@ int zmain(void)
         } 
         
         reflectance_read(&reflectance_values);
-        shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
+        line_shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
         
         
         if(movement_allowed){
             if(line_count > 3){
                 motor_forward(0,0);
             } else {
-                motor_turn_diff(100, shift);
+                motor_turn_diff(speed, line_shift);
             } 
         }
     }

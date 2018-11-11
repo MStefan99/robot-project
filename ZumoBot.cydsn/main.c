@@ -49,7 +49,11 @@ int zmain(void)
     bool reflectance_black = false;
     uint8_t cross_count = 0;
     const uint8_t speed = 100;
+    int line_shift_change;
     int line_shift;
+    int shift_correction;
+    uint8_t p_coefficient = 1;
+    uint8_t d_coefficient = 1;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -90,11 +94,13 @@ int zmain(void)
         line_shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
         
         
+        shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
+        
         if(movement_allowed){
             if(cross_count > 3){
                 motor_forward(0,0);
             } else {
-                motor_turn_diff(speed, line_shift);
+                motor_turn_diff(speed, shift_correction);
             } 
         }
     }

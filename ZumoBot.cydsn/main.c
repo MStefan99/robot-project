@@ -100,6 +100,16 @@ int zmain(void)
                 
                 motor_turn_diff(100, shift);
                 new_cross_detected = false;
+            } else if (new_cross_detected && line_count == 3) {
+                //turn left
+                motor_tank_turn(0, 0, 100);
+                motor_turn_diff(100, shift);
+                new_cross_detected = false;
+            } else if (new_cross_detected && (line_count == 4 || line_count == 5)) {
+                //turn right twice
+                motor_tank_turn(1, 100, 0);
+                motor_turn_diff(100, shift);
+                new_cross_detected = false;
             } else if (line_count > 5) {
                 motor_forward(0,0);
             } else {

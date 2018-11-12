@@ -40,9 +40,15 @@ void reflectance_normalize(struct sensors_ *ref_readings, struct sensors_differe
 }
 
 int get_offset(struct sensors_ *ref_readings){
-     /* returns the amount of shift from the line calculated as follows:
-       ((r3 - l3) + ((r2 - l2) / 3) + ((r1 - l1) / 5)) / 115 */
-    return ((ref_readings->r3 - ref_readings->l3) + (ref_readings->r2 - ref_readings->l2) / 3 + (ref_readings->r1 - ref_readings->l1) / 5) / 115;
+    int delta_1 = ref_readings->r1 - ref_readings->l1;
+    int delta_2 = ref_readings->r2 - ref_readings->l2;
+    int delta_3 = ref_readings->r3 - ref_readings->l3;
+    int delta_r2 = ref_readings->r2 - ref_readings->r1;
+    int delta_l2 = ref_readings->l1 - ref_readings->l2;
+    int delta_r3 = ref_readings->r3 - ref_readings->r2;
+    int delta_l3 = ref_readings->l2 - ref_readings->l3;
+    
+    return (delta_3 + delta_2 + delta_1 + delta_r2 +  delta_l2 + delta_r3+ delta_l3) / 120;
 }
 
 int get_offset_change(struct sensors_ *ref_readings){

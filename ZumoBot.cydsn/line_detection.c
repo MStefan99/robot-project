@@ -11,7 +11,6 @@
 */
 
 #include "line_detection.h"
-#include <stdio.h>
 
 bool cross_detected() {
     struct sensors_ ref_readings;
@@ -46,9 +45,9 @@ int get_offset(struct sensors_ *ref_readings){
     return ((ref_readings->r3 - ref_readings->l3) + (ref_readings->r2 - ref_readings->l2) / 3 + (ref_readings->r1 - ref_readings->l1) / 5) / 115;
 }
 
-int get_offset_change(struct sensors_ *ref_readings, uint8_t current_speed){
+int get_offset_change(struct sensors_ *ref_readings){
     static int previous_offset;
-    int offset_change = (get_offset(ref_readings) - previous_offset) * current_speed / 512;
+    int offset_change = (get_offset(ref_readings) - previous_offset) * 2;
     previous_offset = get_offset(ref_readings);
     return offset_change;
 }

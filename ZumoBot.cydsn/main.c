@@ -93,7 +93,7 @@ int zmain(void)
         reflectance_normalize(&reflectance_values, &reflectance_offset);
         
         line_shift = get_offset(&reflectance_values);
-        line_shift_change = get_offset_change(&reflectance_values, speed);        
+        line_shift_change = get_offset_change(&reflectance_values);        
         shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
         
         if(movement_allowed){

@@ -32,7 +32,7 @@
     int get_offset(struct sensors_ *ref_readings);
     
     // Returns change in offset from the line
-    int get_offset_change(struct sensors_ *ref_readings, uint8_t speed);
+    int get_offset_change(struct sensors_ *ref_readings);
     
     // Detects cross 
     bool cross_detected();

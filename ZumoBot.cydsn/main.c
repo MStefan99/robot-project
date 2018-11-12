@@ -100,7 +100,7 @@ int zmain(void)
                 
                 motor_turn_diff(100, shift);
                 new_cross_detected = false;
-            } else if (line_count > 5) {
+            } else if (line_count > 4) {
                 motor_forward(0,0);
             } else {
                 motor_turn_diff(100, shift);

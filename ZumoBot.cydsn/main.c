@@ -47,7 +47,7 @@ int zmain(void)
     reflectance_offset_ reflectance_offset = {0,0,0};
     struct sensors_ reflectance_values;
     bool reflectance_black = false;
-    uint8_t line_count = 0;
+    uint8_t cross_count = 0;
     const uint8_t speed = 100;
     int line_shift;
     
@@ -72,7 +72,8 @@ int zmain(void)
         
         if(!cross_detected()){
             if(reflectance_black){
-                ++line_count;
+                // Update cross count after leaving the intersection
+                ++cross_count;
             }
             reflectance_black = false;
         } else {
@@ -90,7 +91,7 @@ int zmain(void)
         
         
         if(movement_allowed){
-            if(line_count > 3){
+            if(cross_count > 3){
                 motor_forward(0,0);
             } else {
                 motor_turn_diff(speed, line_shift);

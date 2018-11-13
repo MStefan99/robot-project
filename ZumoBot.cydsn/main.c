@@ -106,14 +106,12 @@ int zmain(void)
                 new_cross_detected = false;
             } else if (new_cross_detected && cross_count == 3) {
                 //turn left
-                motor_tank_turn(0, 0, speed);
-                vTaskDelay(1000);
+                motor_tank_turn(0, speed, 500);
                 motor_turn_diff(speed, line_shift);
                 new_cross_detected = false;
             } else if (new_cross_detected && (cross_count == 4 || cross_count == 5)) {
                 //turn right twice
-                motor_tank_turn(1, speed, 0);
-                vTaskDelay(1000);
+                motor_tank_turn(1, speed, 600);
                 motor_turn_diff(speed, line_shift);
                 new_cross_detected = false;
             } else if (cross_count > 5) {

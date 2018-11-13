@@ -14,12 +14,12 @@
 #include <Motor.h>
 #include <stdlib.h>
 
-void motor_tank_turn(uint8_t direction, uint8_t l_speed, uint8_t r_speed)
+void motor_tank_turn(uint8_t direction, uint8_t speed)
 {
     MotorDirLeft_Write(!direction);
     MotorDirRight_Write(direction);
-    PWM_WriteCompare1(l_speed); 
-    PWM_WriteCompare2(r_speed);
+    PWM_WriteCompare1(speed); 
+    PWM_WriteCompare2(speed);
     
     MotorDirLeft_Write(0);
     MotorDirRight_Write(0);

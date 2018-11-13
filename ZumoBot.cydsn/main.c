@@ -47,8 +47,9 @@ int zmain(void)
     reflectance_offset_ reflectance_offset = {0,0,0};
     struct sensors_ reflectance_values;
     bool reflectance_black = false;
-    uint8_t line_count = 0;
-    int shift;
+    uint8_t cross_count = 0;
+    const uint8_t speed = 100;
+    int line_shift;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -61,6 +62,7 @@ int zmain(void)
     PWM_Start();
     
     IR_Start();
+    bool new_cross_detected = false;
     
     for (;;) {  
         
@@ -71,6 +73,17 @@ int zmain(void)
             continue;
         }
         
+        if(!cross_detected()){
+            if(reflectance_black){
+                // Update cross count after leaving the intersection
+                ++cross_count;
+                new_cross_detected = true;
+            }
+            reflectance_black = false;
+        } else {
+            reflectance_black = true;
+        }
+        
         if(calibration_mode){
             reflectance_read(&reflectance_values);
             reflectance_offset = reflectance_calibrate(&reflectance_values);
@@ -78,32 +91,21 @@ int zmain(void)
         } 
         
         reflectance_read(&reflectance_values);
-        shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
-        
-        bool new_cross_detected = false;
-        if(!cross_detected()) {
-            if(reflectance_black) {
-                ++line_count;
-                new_cross_detected = true;
-            }
-            reflectance_black = false;
-        } else {
-            reflectance_black = true;
-        }  
+        line_shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
         
         if (movement_allowed) {
-            if (new_cross_detected && line_count == 2) {
+            if (new_cross_detected && cross_count == 2) {
                 motor_forward(0,0);
                 
                 IR_flush();
                 IR_wait();
                 
-                motor_turn_diff(100, shift);
+                motor_turn_diff(speed, line_shift);
                 new_cross_detected = false;
-            } else if (line_count > 2) {
+            } else if (cross_count > 2) {
                 motor_forward(0,0);
             } else {
-                motor_turn_diff(100, shift);
+                motor_turn_diff(speed, line_shift);
                 new_cross_detected = false;
             }
         }

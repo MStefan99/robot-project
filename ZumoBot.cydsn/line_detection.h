@@ -24,8 +24,16 @@
     
     // Sets the calibration between right and left sensors
     struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings); 
+    
     // Edits the reflectance readings according to previous calibration
-    int16_t reflectance_normalize(struct sensors_ *ref_readings, struct sensors_difference_ *ref_offset); 
+    void reflectance_normalize(struct sensors_ *ref_readings, struct sensors_difference_ *ref_offset); 
+    
+    // Returns offset from the line
+    int get_offset(struct sensors_ *ref_readings);
+    
+    // Returns change in offset from the line
+    int get_offset_change(struct sensors_ *ref_readings);
+    
     // Detects cross 
     bool cross_detected();
     

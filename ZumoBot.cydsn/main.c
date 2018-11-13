@@ -41,7 +41,6 @@ CY_ISR(Button_Interrupt)
 
 
 
-
 int zmain(void)
 {    
     reflectance_offset_ reflectance_offset = {0,0,0};
@@ -49,7 +48,11 @@ int zmain(void)
     bool reflectance_black = false;
     uint8_t cross_count = 0;
     const uint8_t speed = 100;
+    int line_shift_change;
     int line_shift;
+    int shift_correction;
+    uint8_t p_coefficient = 1; // TODO MStefan99: calibrate
+    uint8_t d_coefficient = 1; // TODO MStefan99: calibrate
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -91,7 +94,11 @@ int zmain(void)
         } 
         
         reflectance_read(&reflectance_values);
-        line_shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
+        reflectance_normalize(&reflectance_values, &reflectance_offset);
+        
+        line_shift = get_offset(&reflectance_values);
+        line_shift_change = get_offset_change(&reflectance_values);        
+        shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
         
         if (movement_allowed) {
             if (new_cross_detected && cross_count == 2) {
@@ -100,12 +107,12 @@ int zmain(void)
                 IR_flush();
                 IR_wait();
                 
-                motor_turn_diff(speed, line_shift);
+                motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
             } else if (cross_count > 2) {
                 motor_forward(0,0);
             } else {
-                motor_turn_diff(speed, line_shift);
+                motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
             }
         }

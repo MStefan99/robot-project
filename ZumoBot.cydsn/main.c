@@ -64,6 +64,8 @@ int zmain(void)
     printf("Program initialized\n");
     PWM_Start();
     
+    IR_Start();
+    
     for (;;) {  
         
         if(!voltage_test()){
@@ -95,6 +97,18 @@ int zmain(void)
         line_shift = get_offset(&reflectance_values);
         line_shift_change = get_offset_change(&reflectance_values);        
         shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
+        
+        print_mqtt("Zumo025/log",\
+            "Shift: %d\n"
+            "Sensor l3:%d\n"
+            "Sensor l2:%d\n"
+            "Sensor l1:%d\n",\
+        shift_correction, reflectance_values.l3, reflectance_values.l2, reflectance_values.l1);
+        print_mqtt("Zumo025/log",\
+            "Sensor r1:%d\n"
+            "Sensor r2:%d\n"
+            "Sensor r3:%d\n\n",\
+        reflectance_values.r1, reflectance_values.r2, reflectance_values.r3);
         
         if(movement_allowed){
             if(cross_count > 3){

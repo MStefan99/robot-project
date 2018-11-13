@@ -16,7 +16,7 @@
     #include <stdint.h>
 
     // Does the tank turn of the robot. Allowed modes for direction: 0 (left), 1 (right).
-    void motor_tank_turn(uint8_t direction, uint8_t l_speed, uint8_t r_speed);
+    void motor_tank_turn(uint8_t direction, uint8_t speed);
 
     // Turns the robot with a desired speed speed using speed difference
     void motor_turn_diff(uint8_t speed, int diff);

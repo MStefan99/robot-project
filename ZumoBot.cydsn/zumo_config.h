@@ -5,12 +5,12 @@
 #define START_MQTT 1    
 
 /* The following definitions must all be in double quotes */
-#define NETWORK_SSID "S8"
+#define NETWORK_SSID "SmartIoT"
 
-#define NETWORK_PASSWORD "testpassword"
+#define NETWORK_PASSWORD "Smart2018"
 
-#define MQTT_BROKER "192.168.43.76"  
+#define MQTT_BROKER "192.168.1.254"  
     
-#define MQTT_CLIENT_ID "Zumo025"    
+#define MQTT_CLIENT_ID "Zumo025"
 
 #endif

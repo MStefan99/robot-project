@@ -27,7 +27,7 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
-#define ZUMO_TITLE "Zumo025/"
+#define ZUMO_TITLE "Zumo025"
 
 bool movement_allowed = false;
 volatile bool calibration_mode = false;
@@ -80,6 +80,8 @@ int zmain(void)
         
         
         if (!user_time_received) {
+            //MQTT logs has higher priority, so wait until MQTT connection is established before continue program.
+            vTaskDelay(20000);
             printf("Welcome to Assignment 1 of Week 5. To continue program needs time in 24-hours format.\n");
         
             do {
@@ -108,9 +110,11 @@ int zmain(void)
             RTC_EnableInt(); /* Enable Interrupt of RTC Component */
             
             printf("%scurrent_time %2d:%02d.%02d\n", ZUMO_TITLE, now.Hour, now.Min, now.Sec);
+            print_mqtt(ZUMO_TITLE, "current_time %2d:%02d.%02d", now.Hour, now.Min, now.Sec);
 
             button_pressed = false;
         }
+        vTaskDelay(50);
     }
 }
 

@@ -27,6 +27,10 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
+#define ZUMO_TITLE "Zumo025" //TODO msaveleva: add correct name
+static const uint8_t speed = 100;
+static const int cross_to_stop_on = 2;
+
 bool movement_allowed = false;
 volatile bool calibration_mode = false;
 
@@ -47,7 +51,6 @@ int zmain(void)
     struct sensors_ reflectance_values;
     bool reflectance_black = false;
     uint8_t cross_count = 0;
-    const uint8_t speed = 100;
     int line_shift_change;
     int line_shift;
     int shift_correction;
@@ -65,6 +68,7 @@ int zmain(void)
     PWM_Start();
     
     IR_Start();
+    bool new_cross_detected = false;
     
     for (;;) {  
         
@@ -79,6 +83,7 @@ int zmain(void)
             if(reflectance_black){
                 // Update cross count after leaving the intersection
                 ++cross_count;
+                new_cross_detected = true;
             }
             reflectance_black = false;
         } else {
@@ -98,24 +103,21 @@ int zmain(void)
         line_shift_change = get_offset_change(&reflectance_values);        
         shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
         
-        print_mqtt("Zumo025/log",\
-            "Shift: %d\n"
-            "Sensor l3:%d\n"
-            "Sensor l2:%d\n"
-            "Sensor l1:%d\n",\
-        shift_correction, reflectance_values.l3, reflectance_values.l2, reflectance_values.l1);
-        print_mqtt("Zumo025/log",\
-            "Sensor r1:%d\n"
-            "Sensor r2:%d\n"
-            "Sensor r3:%d\n\n",\
-        reflectance_values.r1, reflectance_values.r2, reflectance_values.r3);
-        
-        if(movement_allowed){
-            if(cross_count > 3){
+        if (movement_allowed) {
+            if (new_cross_detected && cross_count == 2) {
+                motor_forward(0,0);
+                
+                IR_flush();
+                IR_wait();
+                
+                motor_turn_diff(speed, shift_correction);
+                new_cross_detected = false;
+            } else if (cross_count > cross_to_stop_on) {
                 motor_forward(0,0);
             } else {
                 motor_turn_diff(speed, shift_correction);
-            } 
+                new_cross_detected = false;
+            }
         }
     }
 }

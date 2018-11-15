@@ -32,8 +32,11 @@
 #define ZUMO_TITLE_STOP "Zumo025/stop"
 #define ZUMO_TITLE_TIME "Zumo025/time"
 
+#define ZUMO_TITLE_MISS "Zumo025/miss"
+#define ZUMO_TITLE_LINE "Zumo025/line"
+
 static const uint8_t speed = 100;
-static const int cross_to_stop_on = 2;
+static const int cross_to_stop_on = 3;
 
 bool movement_allowed = false;
 volatile bool calibration_mode = false;
@@ -73,6 +76,10 @@ int zmain(void)
     
     IR_Start();
     bool new_cross_detected = false;
+    bool track_completed = false;
+    
+    TickType_t start_time;
+    TickType_t end_time;
     
     for (;;) {  
         
@@ -111,13 +118,25 @@ int zmain(void)
             if (new_cross_detected && cross_count == 2) {
                 motor_forward(0,0);
                 
+                print_mqtt(ZUMO_TITLE_READY, "line");
                 IR_flush();
                 IR_wait();
+                
+                start_time = xTaskGetTickCount();
+                print_mqtt(ZUMO_TITLE_START, "%ld", start_time);
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
             } else if (cross_count > cross_to_stop_on) {
                 motor_forward(0,0);
+                
+                if (!track_completed) {
+                    end_time = xTaskGetTickCount();
+                    print_mqtt(ZUMO_TITLE_STOP, "%ld", end_time);
+                    
+                    TickType_t result = end_time - start_time;
+                    print_mqtt(ZUMO_TITLE_TIME, "%ld", result);
+                }
             } else {
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;

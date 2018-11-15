@@ -47,12 +47,12 @@ int zmain(void)
     struct sensors_ reflectance_values;
     bool reflectance_black = false;
     uint8_t cross_count = 0;
-    const uint8_t speed = 100;
+    const uint8_t speed = 200;
     int line_shift_change;
     int line_shift;
     int shift_correction;
-    float p_coefficient = 1; // TODO MStefan99: calibrate
-    float d_coefficient = 1; // TODO MStefan99: calibrate
+    float p_coefficient = 2; // TODO MStefan99: calibrate
+    float d_coefficient = 5; // TODO MStefan99: calibrate
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -95,11 +95,6 @@ int zmain(void)
         line_shift = get_offset(&reflectance_values);
         line_shift_change = get_offset_change(&reflectance_values);        
         shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
-        
-        printf("Shift: %d\n", line_shift);
-        printf("Change: %d\n", line_shift_change);
-        printf("Value: %d\n\n", shift_correction);
-        vTaskDelay(400);
         
         if(movement_allowed){
             if(cross_count > 3){

@@ -32,7 +32,7 @@
 bool movement_allowed = false;
 volatile bool calibration_mode = false;
 int get_turn_direction();
-void obstacle_avoid();
+int obstacle_found();
 
 CY_ISR_PROTO(Button_Interrupt);
 
@@ -69,8 +69,11 @@ int zmain(void)
         }
         
         
-        
-        obstacle_avoid(get_turn_direction());
+        if (obstacle_found()){
+        motor_tank_turn(get_turn_direction(), 200, 250);
+        } else {
+        motor_forward(200, 0);
+        }
     }
 
 }
@@ -79,28 +82,22 @@ int zmain(void)
 int get_turn_direction() {
     int random_direction = rand() % 2;
     if (random_direction) {
-        printf("Right\n");
+        print_mqtt("Zumo025/turn", "Right");
     } else {
-        printf("Left\n");
+        print_mqtt("Zumo025/turn", "Left");
     }
         
     return random_direction;
 }
    
-void obstacle_avoid(int direction){    
-    int distance=20;
-    distance=Ultra_GetDistance();
-    printf("Distance is: %d cm\n", distance);
-    vTaskDelay(50);        
+int obstacle_found(){    
+    int distance;
+    distance=Ultra_GetDistance();     
         
     if(distance < 10){
-        motor_forward(0, 0); 
-        Beep(100, 50);
-        vTaskDelay(20);
-        Beep(100, 50);
-        motor_tank_turn(direction, 200, 250);
+        return 1;        
     } else {
-        motor_forward(200, 0); 
+        return 0;
     }
 }
 

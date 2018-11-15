@@ -96,8 +96,11 @@ int zmain(void)
         line_shift_change = get_offset_change(&reflectance_values);        
         shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
         
+        printf("%d\n", shift_correction);
+        vTaskDelay(50);
+        
         if(movement_allowed){
-            if(cross_count > 3){
+            if(cross_count > 2){
                 motor_forward(0,0);
             } else {
                 motor_turn_diff(speed, shift_correction);

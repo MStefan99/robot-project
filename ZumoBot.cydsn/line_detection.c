@@ -47,10 +47,12 @@ int get_offset(struct sensors_ *ref_readings){
     static struct sensors_ ref_previous;
     static bool line_lost;
     static bool line_lost_direction;
-    int low_pass = 8000;
-    int high_pass = 20000;
     int setpoint_value_inner = 21500;
     int setpoint_value_outer = 5000;
+    int threshold = 15000;
+    
+    /* white - 4200
+       black - 23600 */
     
     int delta_r1 = ref_readings->r1 - setpoint_value_inner;
     int delta_l1 = setpoint_value_inner - ref_readings->l1;
@@ -59,21 +61,26 @@ int get_offset(struct sensors_ *ref_readings){
     int delta_r3 = ref_readings->r3 - setpoint_value_outer;
     int delta_l3 = setpoint_value_outer - ref_readings->l3;
     
-    if (ref_previous.r3 > high_pass && ref_readings->r3 < low_pass && ref_readings->r2 < low_pass) {
+    bool right_black = ref_previous.r3 > threshold;
+    bool left_black = ref_previous.l3 > threshold;
+    
+    bool all_white = (ref_readings->l3 < threshold) && (ref_readings->l2 < threshold) && (ref_readings->l1 < threshold) && (ref_readings->r1 < threshold) && (ref_readings->r2 < threshold) && (ref_readings->r3 < threshold); 
+    
+    if (right_black && all_white) {
         line_lost = true;
         line_lost_direction = true;
-    } else if (ref_previous.l3 > high_pass && ref_readings->l3 < low_pass && ref_readings->l2 < low_pass) {
+    } else if (left_black && all_white) {
         line_lost = true;
         line_lost_direction = false;
-    } else if (ref_readings->r3 < high_pass || ref_readings->l3 < high_pass){
+    } else if (!all_white) {
         line_lost = false;
     }
     
     if (line_lost) {
         if(line_lost_direction){
-        return 255;
+            return 255;
         } else {
-        return -255;
+            return -255;
         }
     }
     
@@ -87,7 +94,7 @@ int get_offset_change(struct sensors_ *ref_readings){
     static int previous_offset;
     static TickType_t previous_time;
     
-    int offset_change = (get_offset(ref_readings) - previous_offset) * 300 / (int)(xTaskGetTickCount() - previous_time);
+    int offset_change = (get_offset(ref_readings) - previous_offset) / (int)(xTaskGetTickCount() - previous_time);
     previous_time = xTaskGetTickCount();
     previous_offset = get_offset(ref_readings);
     

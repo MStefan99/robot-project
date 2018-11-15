@@ -27,14 +27,20 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
+#define ZUMO_TITLE "Zumo025/"
+
 bool movement_allowed = false;
 volatile bool calibration_mode = false;
 
 CY_ISR_PROTO(Button_Interrupt);
 bool incorrect_time(int hours, int minutes);
 
+bool button_pressed = false; 
+
 CY_ISR(Button_Interrupt)
 {
+    button_pressed = true;
+    
     movement_allowed = true;
     calibration_mode = true;
     SW1_ClearInterrupt();
@@ -56,6 +62,13 @@ int zmain(void)
     
     IR_Start();
     
+    bool user_time_received = false;
+    int hours = 0;
+    int minutes = 0;
+    
+    RTC_Start();
+    RTC_TIME_DATE now;
+    
     for (;;) {  
         
         if(!voltage_test()){
@@ -65,22 +78,39 @@ int zmain(void)
             continue;
         }
         
-        int hours = 0;
-        int minutes = 0;
-        printf("Welcome to Assignment 1 of Week 5. To continue program needs time in 24-hours format.\n");
         
-        do {
-            printf("Enter hours: ");
-            scanf("%d", &hours);
-            printf("Enter minutes: ");
-            scanf("%d", &minutes); 
+        if (!user_time_received) {
+            printf("Welcome to Assignment 1 of Week 5. To continue program needs time in 24-hours format.\n");
+        
+            do {
+                printf("Enter hours: ");
+                scanf("%d", &hours);
+                printf("Enter minutes: ");
+                scanf("%d", &minutes); 
+                
+                if (incorrect_time(hours, minutes)) {
+                    printf("Incorrect data, try again.\n");
+                } else {
+                    printf("You entered %d:%d\n", hours, minutes);
+                    user_time_received = true;
+                    
+                    now.Hour = hours;
+                    now.Min = minutes;
+                    RTC_WriteTime(&now);
+                }
+            } while (incorrect_time(hours, minutes));
+        }
+        
+        
+        if (button_pressed) {
+            RTC_DisableInt(); /* Disable Interrupt of RTC Component */
+            now = *RTC_ReadTime(); /* copy the current time to a local variable */
+            RTC_EnableInt(); /* Enable Interrupt of RTC Component */
             
-            if (incorrect_time(hours, minutes)) {
-                printf("Incorrect data, try again.\n");
-            } else {
-                printf("You entered %d:%d\n", hours, minutes);
-            }
-        } while (incorrect_time(hours, minutes));
+            printf("%scurrent_time %2d:%02d.%02d\n", ZUMO_TITLE, now.Hour, now.Min, now.Sec);
+
+            button_pressed = false;
+        }
     }
 }
 

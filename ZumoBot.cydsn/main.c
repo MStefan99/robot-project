@@ -27,7 +27,11 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
-#define ZUMO_TITLE "Zumo025" //TODO msaveleva: add correct name
+#define ZUMO_TITLE_READY "Zumo025/ready"
+#define ZUMO_TITLE_START "Zumo025/start"
+#define ZUMO_TITLE_STOP "Zumo025/stop"
+#define ZUMO_TITLE_TIME "Zumo025/time"
+
 static const uint8_t speed = 100;
 static const int cross_to_stop_on = 2;
 

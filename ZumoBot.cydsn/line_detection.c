@@ -11,6 +11,9 @@
 */
 
 #include "line_detection.h"
+#include <FreeRTOS.h>
+#include <task.h>
+#include <stdio.h>
 
 bool cross_detected() {
     struct sensors_ ref_readings;
@@ -40,20 +43,23 @@ void reflectance_normalize(struct sensors_ *ref_readings, struct sensors_differe
 }
 
 int get_offset(struct sensors_ *ref_readings){
-    int delta_1 = ref_readings->r1 - ref_readings->l1;
-    int delta_2 = ref_readings->r2 - ref_readings->l2;
-    int delta_3 = ref_readings->r3 - ref_readings->l3;
-    int delta_r2 = ref_readings->r2 - ref_readings->r1;
-    int delta_l2 = ref_readings->l1 - ref_readings->l2;
-    int delta_r3 = ref_readings->r3 - ref_readings->r2;
-    int delta_l3 = ref_readings->l2 - ref_readings->l3;
+    int setpoint_value_inner = 21500;
+    int setpoint_value_outer = 5000;
+    int delta_r1 = ref_readings->r1 - setpoint_value_inner;
+    int delta_l1 = setpoint_value_inner - ref_readings->l1;
+    int delta_r2 = ref_readings->r2 - setpoint_value_outer;
+    int delta_l2 = setpoint_value_outer - ref_readings->l2;
+    int delta_r3 = ref_readings->r3 - setpoint_value_outer;
+    int delta_l3 = setpoint_value_outer - ref_readings->l3;
     
-    return (delta_3 + delta_2 + delta_1 + delta_r2 +  delta_l2 + delta_r3+ delta_l3) / 120;
+    return (delta_r1 + delta_l1 + delta_r2 + delta_l2 + delta_r3 + delta_l3) / 180;
 }
 
 int get_offset_change(struct sensors_ *ref_readings){
     static int previous_offset;
-    int offset_change = (get_offset(ref_readings) - previous_offset) * 2;
+    static TickType_t previous_time;
+    int offset_change = (get_offset(ref_readings) - previous_offset) * 300 / (int)(xTaskGetTickCount() - previous_time);
+    previous_time = xTaskGetTickCount();
     previous_offset = get_offset(ref_readings);
     return offset_change;
 }

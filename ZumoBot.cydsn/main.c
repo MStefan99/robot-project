@@ -29,34 +29,18 @@
 */
 
 
-bool movement_allowed = false;
-volatile bool calibration_mode = false;
 int get_turn_direction();
 int obstacle_found();
-
-CY_ISR_PROTO(Button_Interrupt);
-
-CY_ISR(Button_Interrupt)
-{
-    movement_allowed = true;
-    calibration_mode = true;
-    SW1_ClearInterrupt();
-}
-
 
 
 int zmain(void)
 {    
-    
-    CyGlobalIntEnable; /* Enable global interrupts. */
-    Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
-    reflectance_start();
+    CyGlobalIntEnable; // Enable global interrupts.
     UART_1_Start();    
     Ultra_Start();
     ADC_Battery_Start();
     ADC_Battery_StartConvert();    
     PWM_Start();
-    IR_Start();
     printf("Program initialized\n");
         
     for (;;) {  
@@ -78,7 +62,7 @@ int zmain(void)
 
 }
 
-//0 - left, 1 - right
+// 0 - left, 1 - right
 int get_turn_direction() {
     int random_direction = rand() % 2;
     if (random_direction) {

@@ -1,6 +1,7 @@
 
 #include <project.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "Motor.h"
@@ -118,6 +119,18 @@ int zmain(void)
             } 
         }
     }
+}
+
+//0 - left, 1 - right
+int get_turn_direction() {
+    int random_direction = rand() % 2;
+    if (random_direction) {
+        printf("Right\n");
+    } else {
+        printf("Left\n");
+    }
+        
+    return random_direction;
 }
 
 /* [] END OF FILE */

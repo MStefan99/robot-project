@@ -11,8 +11,6 @@
 */
 
 #include "line_detection.h"
-#include <stdlib.h>
-#include <stdio.h>
 
 bool cross_detected() {
     struct sensors_ ref_readings;

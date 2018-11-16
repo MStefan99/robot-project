@@ -31,11 +31,17 @@ void motor_turn_diff(uint8_t speed, int diff)
     uint8_t r_speed = speed;
     if (abs(diff) > speed){
         if(diff>0){
-            r_speed=0;
+            MotorDirLeft_Write(1);
+            l_speed -= diff*speed/2000;
+            r_speed = 0;
         } else {
-            l_speed=0;
+            MotorDirRight_Write(1);
+            r_speed -= diff*speed/2000;
+            l_speed = 0;
         }
     } else {
+        MotorDirLeft_Write(0);
+        MotorDirRight_Write(0);
         if (diff > 0){
            r_speed -= diff*speed/255;
        } else {

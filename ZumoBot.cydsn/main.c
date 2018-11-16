@@ -55,11 +55,12 @@ int zmain(void)
     struct sensors_ reflectance_values;
     bool reflectance_black = false;
     uint8_t cross_count = 0;
+    const uint8_t speed = 255;
     int line_shift_change;
     int line_shift;
     int shift_correction;
-    uint8_t p_coefficient = 1; // TODO MStefan99: calibrate
-    uint8_t d_coefficient = 1; // TODO MStefan99: calibrate
+    float p_coefficient = 2.5;
+    float d_coefficient = 4;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -67,7 +68,7 @@ int zmain(void)
     reflectance_start();
     UART_1_Start();    
     ADC_Battery_Start();
-    ADC_Battery_StartConvert();    
+    ADC_Battery_StartConvert();  
     printf("Program initialized\n");
     PWM_Start();
     

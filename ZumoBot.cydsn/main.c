@@ -47,12 +47,12 @@ int zmain(void)
     struct sensors_ reflectance_values;
     bool reflectance_black = false;
     uint8_t cross_count = 0;
-    const uint8_t speed = 200;
+    const uint8_t speed = 255;
     int line_shift_change;
     int line_shift;
     int shift_correction;
-    float p_coefficient = 2; // TODO MStefan99: calibrate
-    float d_coefficient = 5; // TODO MStefan99: calibrate
+    float p_coefficient = 2.5;
+    float d_coefficient = 4;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -60,7 +60,7 @@ int zmain(void)
     reflectance_start();
     UART_1_Start();    
     ADC_Battery_Start();
-    ADC_Battery_StartConvert();    
+    ADC_Battery_StartConvert();  
     printf("Program initialized\n");
     PWM_Start();
     
@@ -96,11 +96,8 @@ int zmain(void)
         line_shift_change = get_offset_change(&reflectance_values);        
         shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
         
-        printf("%d\n", shift_correction);
-        vTaskDelay(50);
-        
         if(movement_allowed){
-            if(cross_count > 2){
+            if(cross_count > 3){
                 motor_forward(0,0);
             } else {
                 motor_turn_diff(speed, shift_correction);

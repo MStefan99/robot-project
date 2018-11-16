@@ -11,14 +11,12 @@
 */
 
 #include "line_detection.h"
-#include <FreeRTOS.h>
-#include <task.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 bool cross_detected() {
     struct sensors_ ref_readings;
-    const uint16_t threshold=20000;
+    const uint16_t threshold = 20000;
     reflectance_read(&ref_readings);
     if(ref_readings.l3 + ref_readings.l2 + ref_readings.l1 + ref_readings.r1 + ref_readings.r2 + ref_readings.r3 > threshold * 6){
         return true;
@@ -92,10 +90,8 @@ int get_offset(struct sensors_ *ref_readings){
 int get_offset_change(struct sensors_ *ref_readings){
     
     static int previous_offset;
-    static TickType_t previous_time;
     
-    int offset_change = (get_offset(ref_readings) - previous_offset) / (int)(xTaskGetTickCount() - previous_time);
-    previous_time = xTaskGetTickCount();
+    int offset_change = (get_offset(ref_readings) - previous_offset);
     previous_offset = get_offset(ref_readings);
     
     return offset_change;

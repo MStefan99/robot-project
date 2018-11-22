@@ -27,7 +27,12 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
-bool movement_allowed = false;
+#define ZUMO_TITLE_READY "Zumo033/ready"
+#define ZUMO_TITLE_START "Zumo033/start"
+#define ZUMO_TITLE_STOP "Zumo033/stop"
+#define ZUMO_TITLE_TIME "Zumo033/time"
+
+volatile bool movement_allowed = false;
 volatile bool calibration_mode = false;
 
 CY_ISR_PROTO(Button_Interrupt);
@@ -51,8 +56,9 @@ int zmain(void)
     int line_shift_change;
     int line_shift;
     int shift_correction;
-    uint8_t p_coefficient = 1; // TODO MStefan99: calibrate
-    uint8_t d_coefficient = 1; // TODO MStefan99: calibrate
+    float p_coefficient = 2.5;
+    float d_coefficient = 4;
+    static const int cross_to_stop_on = 2;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -60,7 +66,7 @@ int zmain(void)
     reflectance_start();
     UART_1_Start();    
     ADC_Battery_Start();
-    ADC_Battery_StartConvert();    
+    ADC_Battery_StartConvert();  
     printf("Program initialized\n");
     PWM_Start();
     
@@ -103,13 +109,11 @@ int zmain(void)
         if (movement_allowed) {
             if (new_cross_detected && cross_count == 2) {
                 motor_forward(0,0);
-                
                 IR_flush();
                 IR_wait();
-                
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
-            } else if (cross_count > 2) {
+            } else if (cross_count > cross_to_stop_on) {
                 motor_forward(0,0);
             } else {
                 motor_turn_diff(speed, shift_correction);

@@ -11,6 +11,6 @@
 
 #define MQTT_BROKER "192.168.1.254"  
     
-#define MQTT_CLIENT_ID "Zumo025"
+#define MQTT_CLIENT_ID "Zumo033"
 
 #endif

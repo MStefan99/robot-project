@@ -73,6 +73,7 @@ int zmain(void)
     ADC_Battery_Start();
     ADC_Battery_StartConvert();  
     printf("Program initialized\n");
+    print_mqtt(ZUMO_TITLE_READY, "line");
     PWM_Start();
     
     IR_Start();
@@ -120,7 +121,6 @@ int zmain(void)
             if (new_cross_detected && cross_count == 2) {
                 motor_forward(0,0);
                 
-                print_mqtt(ZUMO_TITLE_READY, "line");
                 IR_flush();
                 IR_wait();
                 

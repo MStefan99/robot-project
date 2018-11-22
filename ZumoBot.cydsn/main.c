@@ -20,6 +20,7 @@
 #include <voltage.h>
 #include <line_detection.h>
 #include <movement.h>
+#include <string.h>
 
 /**
  * @file    main.c
@@ -50,7 +51,10 @@ CY_ISR(Button_Interrupt)
     SW1_ClearInterrupt();
 }
 
-
+typedef struct {
+    char *title;
+    TickType_t time; 
+} mqtt_logs_cache;
 
 int zmain(void)
 {    
@@ -64,6 +68,9 @@ int zmain(void)
     int shift_correction;
     float p_coefficient = 2.5;
     float d_coefficient = 4;
+    
+    mqtt_logs_cache logs_array[100];
+    int number_of_logs = 0;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -125,7 +132,10 @@ int zmain(void)
                 IR_wait();
                 
                 start_time = xTaskGetTickCount();
-                print_mqtt(ZUMO_TITLE_START, "%ld", start_time);
+                //print_mqtt(ZUMO_TITLE_START, "%ld", start_time);
+                mqtt_logs_cache log = { ZUMO_TITLE_LINE, start_time };
+                logs_array[number_of_logs] = log;
+                number_of_logs++;
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
@@ -134,12 +144,21 @@ int zmain(void)
                 
                 if (!track_completed) {
                     end_time = xTaskGetTickCount();
-                    print_mqtt(ZUMO_TITLE_STOP, "%ld", end_time);
+                    mqtt_logs_cache log = { ZUMO_TITLE_STOP, end_time };
+                    logs_array[number_of_logs] = log;
+                    number_of_logs++;
                     
                     TickType_t result = end_time - start_time;
-                    print_mqtt(ZUMO_TITLE_TIME, "%ld", result);
+                    mqtt_logs_cache log2 = { ZUMO_TITLE_TIME, result };
+                    logs_array[number_of_logs] = log2;
+                    number_of_logs++;
                     
                     track_completed = true;
+                    
+                    for (int i = 0; i < number_of_logs; i++) {
+                        mqtt_logs_cache log = logs_array[i];
+                        print_mqtt(log.title, "%ld", log.time);
+                    }
                 }
             } else {
                 motor_turn_diff(speed, shift_correction);
@@ -147,13 +166,13 @@ int zmain(void)
                 
                 //TODO msaveleva: add condition to print second log one time. 
                 
-                /*if (check_if_following_line() == 0 && line_was_lost) {
-                    print_mqtt(ZUMO_TITLE_LINE, "%ld", xTaskGetTickCount());
+                if (check_if_following_line() == 0 && line_was_lost) {
+                    //print_mqtt(ZUMO_TITLE_LINE, "%ld", xTaskGetTickCount());
                     line_was_lost = false;
                 } else {
                     line_was_lost = true;
-                    print_mqtt(ZUMO_TITLE_MISS, "%ld", xTaskGetTickCount());
-                }*/
+                    //print_mqtt(ZUMO_TITLE_MISS, "%ld", xTaskGetTickCount());
+                }
             }
         }
     }

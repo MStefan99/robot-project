@@ -27,6 +27,11 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
+#define ZUMO_TITLE_READY "Zumo033/ready"
+#define ZUMO_TITLE_START "Zumo033/start"
+#define ZUMO_TITLE_STOP "Zumo033/stop"
+#define ZUMO_TITLE_TIME "Zumo033/time"
+
 bool movement_allowed = false;
 volatile bool calibration_mode = false;
 
@@ -41,7 +46,6 @@ CY_ISR(Button_Interrupt)
 
 
 
-
 int zmain(void)
 {    
     reflectance_offset_ reflectance_offset = {0,0,0};
@@ -49,7 +53,12 @@ int zmain(void)
     bool reflectance_black = false;
     uint8_t cross_count = 0;
     const uint8_t speed = 100;
+    int line_shift_change;
     int line_shift;
+    int shift_correction;
+    float p_coefficient = 2.5;
+    float d_coefficient = 4;
+    static const int cross_to_stop_on = 2;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -57,12 +66,11 @@ int zmain(void)
     reflectance_start();
     UART_1_Start();    
     ADC_Battery_Start();
-    ADC_Battery_StartConvert();    
+    ADC_Battery_StartConvert();  
     printf("Program initialized\n");
     PWM_Start();
     
     IR_Start();
-    
     bool new_cross_detected = false;
     
     for (;;) {  
@@ -93,15 +101,17 @@ int zmain(void)
         } 
         
         reflectance_read(&reflectance_values);
-        line_shift = reflectance_normalize(&reflectance_values, &reflectance_offset);
+        reflectance_normalize(&reflectance_values, &reflectance_offset);
+        
+        line_shift = get_offset(&reflectance_values);
+        line_shift_change = get_offset_change(&reflectance_values);        
+        shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
         
         if (movement_allowed) {
             if (new_cross_detected && cross_count == 2) {
-                motor_forward(0,0);
-                
+                motor_forward(0,0);                
                 IR_flush();
-                IR_wait();
-                
+                IR_wait();                
                 motor_turn_diff(speed, line_shift);
                 new_cross_detected = false;
             } else if (new_cross_detected && cross_count == 3) {

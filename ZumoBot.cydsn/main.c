@@ -27,13 +27,13 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
-#define ZUMO_TITLE_READY "Zumo025/ready"
-#define ZUMO_TITLE_START "Zumo025/start"
-#define ZUMO_TITLE_STOP "Zumo025/stop"
-#define ZUMO_TITLE_TIME "Zumo025/time"
+#define ZUMO_TITLE_READY "Zumo033/ready"
+#define ZUMO_TITLE_START "Zumo033/start"
+#define ZUMO_TITLE_STOP "Zumo033/stop"
+#define ZUMO_TITLE_TIME "Zumo033/time"
 
-#define ZUMO_TITLE_MISS "Zumo025/miss"
-#define ZUMO_TITLE_LINE "Zumo025/line"
+#define ZUMO_TITLE_MISS "Zumo033/miss"
+#define ZUMO_TITLE_LINE "Zumo033/line"
 
 static const uint8_t speed = 100;
 static const int cross_to_stop_on = 3;
@@ -137,6 +137,8 @@ int zmain(void)
                     
                     TickType_t result = end_time - start_time;
                     print_mqtt(ZUMO_TITLE_TIME, "%ld", result);
+                    
+                    track_completed = true;
                 }
             } else {
                 motor_turn_diff(speed, shift_correction);

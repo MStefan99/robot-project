@@ -32,7 +32,7 @@
     int get_offset(struct sensors_ *ref_readings);
     
     // Returns 0 if on line, 1 if line is on the right and -1 if on the left
-    int is_following_line();
+    int check_if_following_line();
     
     // Returns change in offset from the line
     int get_offset_change(struct sensors_ *ref_readings);

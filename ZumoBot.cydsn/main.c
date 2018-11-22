@@ -78,6 +78,7 @@ int zmain(void)
     IR_Start();
     bool new_cross_detected = false;
     bool track_completed = false;
+    bool line_was_lost = false;
     
     TickType_t start_time;
     TickType_t end_time;
@@ -143,6 +144,14 @@ int zmain(void)
             } else {
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
+                
+                if (check_if_following_line() == 0 && line_was_lost) {
+                    //print_mqtt(ZUMO_TITLE_LINE, "%ld", xTaskGetTickCount());
+                    line_was_lost = false;
+                } else {
+                    line_was_lost = true;
+                    print_mqtt(ZUMO_TITLE_MISS, "%ld", xTaskGetTickCount());
+                }
             }
         }
     }

@@ -87,6 +87,7 @@ int zmain(void)
     bool new_cross_detected = false;
     bool track_completed = false;
     bool line_was_lost = false;
+    bool logged_lost_line = false;
     
     TickType_t start_time;
     TickType_t end_time;
@@ -164,14 +165,20 @@ int zmain(void)
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
                 
-                //TODO msaveleva: add condition to print second log one time. 
-                
                 if (check_if_following_line() == 0 && line_was_lost) {
-                    //print_mqtt(ZUMO_TITLE_LINE, "%ld", xTaskGetTickCount());
                     line_was_lost = false;
-                } else {
+                    logged_lost_line = false;
+                    
+                    mqtt_logs_cache log = { ZUMO_TITLE_LINE, xTaskGetTickCount() };
+                    logs_array[number_of_logs] = log;
+                    number_of_logs++;
+                } else if (check_if_following_line() != 0 && !logged_lost_line) {
+                    logged_lost_line = true;
                     line_was_lost = true;
-                    //print_mqtt(ZUMO_TITLE_MISS, "%ld", xTaskGetTickCount());
+                    
+                    mqtt_logs_cache log = { ZUMO_TITLE_MISS, xTaskGetTickCount() };
+                    logs_array[number_of_logs] = log;
+                    number_of_logs++;
                 }
             }
         }

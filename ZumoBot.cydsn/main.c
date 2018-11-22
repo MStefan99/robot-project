@@ -61,6 +61,7 @@ int zmain(void)
     int shift_correction;
     float p_coefficient = 2.5;
     float d_coefficient = 4;
+    bool new_cross_detected = false;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -71,9 +72,7 @@ int zmain(void)
     ADC_Battery_StartConvert();  
     printf("Program initialized\n");
     PWM_Start();
-    
     IR_Start();
-    bool new_cross_detected = false;
     
     for (;;) {  
         
@@ -104,25 +103,21 @@ int zmain(void)
         reflectance_read(&reflectance_values);
         reflectance_normalize(&reflectance_values, &reflectance_offset);
         
-        line_shift = get_offset(&reflectance_values);
-        line_shift_change = get_offset_change(&reflectance_values);        
-        shift_correction = line_shift * p_coefficient + line_shift_change * d_coefficient;
-        
         if (movement_allowed) {
             if (new_cross_detected && cross_count == 2) {
-                motor_forward(0,0);
-                
+                motor_forward(0, 0);
                 IR_flush();
                 IR_wait();
-                
-                motor_turn_diff(speed, shift_correction);
+                motor_forward(50, 500);
                 new_cross_detected = false;
-            } else if (cross_count > cross_to_stop_on) {
-                motor_forward(0,0);
+            } else if (cross_count < 2) {
+                motor_forward(speed, 0);
             } else {
-                motor_turn_diff(speed, shift_correction);
-                new_cross_detected = false;
+                if (line_detected(2)){
+                    motor_tank_turn(1, speed, speed * 1.2);
+                }
             }
+            motor_forward(speed, 0);
         }
     }
 }

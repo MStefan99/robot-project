@@ -40,6 +40,9 @@
     // Detects cross 
     bool cross_detected();
     
+    // Returns true if a certain number of sensors detect the line
+    bool line_detected(int number);
+    
 #endif
 
 /* [] END OF FILE */

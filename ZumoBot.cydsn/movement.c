@@ -16,7 +16,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
-void motor_tank_turn(uint8_t direction, uint8_t speed, float delay)
+void motor_tank_turn(uint8_t direction, uint8_t speed, uint32_t delay)
 {
     MotorDirLeft_Write(!direction);
     MotorDirRight_Write(direction);

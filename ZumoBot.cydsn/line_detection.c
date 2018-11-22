@@ -26,6 +26,17 @@ bool cross_detected() {
     return false;
 }
 
+bool line_detected(int number) {
+    struct sensors_ ref_readings;
+    const uint16_t threshold = 20000;
+    reflectance_read(&ref_readings);
+    if(ref_readings.l3 + ref_readings.l2 + ref_readings.l1 + ref_readings.r1 + ref_readings.r2 + ref_readings.r3 > threshold * number){
+        return true;
+    }
+    
+    return false;
+}
+
 struct sensors_difference_ reflectance_calibrate(struct sensors_ *ref_readings)
 {
     struct sensors_difference_ sensor_diff;

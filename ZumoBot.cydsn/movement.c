@@ -13,13 +13,17 @@
 #include <movement.h>
 #include <Motor.h>
 #include <stdlib.h>
+#include <FreeRTOS.h>
+#include <task.h>
 
-void motor_tank_turn(uint8_t direction, uint8_t l_speed, uint8_t r_speed)
+void motor_tank_turn(uint8_t direction, uint8_t speed, float delay)
 {
     MotorDirLeft_Write(!direction);
     MotorDirRight_Write(direction);
-    PWM_WriteCompare1(l_speed); 
-    PWM_WriteCompare2(r_speed);
+    PWM_WriteCompare1(speed); 
+    PWM_WriteCompare2(speed);
+    
+    vTaskDelay(delay);
     
     MotorDirLeft_Write(0);
     MotorDirRight_Write(0);

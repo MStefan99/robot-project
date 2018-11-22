@@ -27,7 +27,7 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
-#define ZUMO_TITLE "Zumo025"
+#define ZUMO_TITLE "Zumo033"
 
 bool movement_allowed = false;
 volatile bool calibration_mode = false;

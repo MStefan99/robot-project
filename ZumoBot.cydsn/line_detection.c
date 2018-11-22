@@ -86,11 +86,11 @@ int get_offset(struct sensors_ *ref_readings){
     return (delta_r1 + delta_l1 + delta_r2 + delta_l2 + delta_r3 + delta_l3) / 180;
 }
 
-int check_if_following_line(){
-    if (!line_lost){
-     return 0;
+int check_if_following_line() {
+    if (!line_lost) {
+        return 0;
     } else {
-        if (line_lost_direction){
+        if (line_lost_direction) {
             return 1;
         } else {
             return -1;

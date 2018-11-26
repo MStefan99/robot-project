@@ -1,0 +1,6 @@
+C:\Users\RUKHS\OneDrive\Documents\smartd\Hello_world.cydsn\Hello_world.cyprj|d6d74581-fd5e-40d6-9130-9ffeb506e657
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|753a2450-9cc4-4dcd-ae33-6d1a2a417c88
+C:\Users\RUKHS\OneDrive\Documents\PSoC Creator\4.2\Downloads ( 4.2).cylib\Downloads ( 4.2).cyprj|d68193aa-38a7-42f6-9d7a-8921725db1ad
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|1b88f654-ab17-4ccf-8999-10806d80013e
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|f801e65f-6304-442a-83c6-7959202d34d3
+C:\Program Files (x86)\Cypress\PSoC Creator\4.2\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|25a09eae-14e7-43bf-bffb-7f5e36c08349

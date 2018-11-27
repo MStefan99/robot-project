@@ -20,6 +20,7 @@
 #include <voltage.h>
 #include <line_detection.h>
 #include <movement.h>
+#include <log.h>
 #include <string.h>
 
 /**
@@ -51,26 +52,25 @@ CY_ISR(Button_Interrupt)
     SW1_ClearInterrupt();
 }
 
-typedef struct {
-    char *title;
-    TickType_t time; 
-} mqtt_logs_cache;
-
 int zmain(void)
 {    
     reflectance_offset_ reflectance_offset = {0,0,0};
     struct sensors_ reflectance_values;
     bool reflectance_black = false;
+    bool new_cross_detected = false;
+    bool track_completed = false;
+    bool line_was_lost = false;
+    bool logged_lost_line = false;
     uint8_t cross_count = 0;
     const uint8_t speed = 255;
     int line_shift_change;
     int line_shift;
     int shift_correction;
     float p_coefficient = 2.5;
-    float d_coefficient = 4;
-    
-    mqtt_logs_cache logs_array[100];
-    int number_of_logs = 0;
+    float d_coefficient = 4;    
+    TickType_t start_time;
+    TickType_t end_time;
+    log_entry* logs_array[0];
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -81,16 +81,8 @@ int zmain(void)
     ADC_Battery_StartConvert();  
     printf("Program initialized\n");
     print_mqtt(ZUMO_TITLE_READY, "line");
-    PWM_Start();
-    
+    PWM_Start();    
     IR_Start();
-    bool new_cross_detected = false;
-    bool track_completed = false;
-    bool line_was_lost = false;
-    bool logged_lost_line = false;
-    
-    TickType_t start_time;
-    TickType_t end_time;
     
     for (;;) {  
         
@@ -134,9 +126,7 @@ int zmain(void)
                 
                 start_time = xTaskGetTickCount();
                 //print_mqtt(ZUMO_TITLE_START, "%ld", start_time);
-                mqtt_logs_cache log = { ZUMO_TITLE_START, start_time };
-                logs_array[number_of_logs] = log;
-                number_of_logs++;
+                log_add(logs_array, make_entry(ZUMO_TITLE_START, start_time));
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
@@ -145,21 +135,14 @@ int zmain(void)
                 
                 if (!track_completed) {
                     end_time = xTaskGetTickCount();
-                    mqtt_logs_cache log = { ZUMO_TITLE_STOP, end_time };
-                    logs_array[number_of_logs] = log;
-                    number_of_logs++;
+                    log_add(logs_array, make_entry(ZUMO_TITLE_STOP, end_time));
                     
                     TickType_t result = end_time - start_time;
-                    mqtt_logs_cache log2 = { ZUMO_TITLE_TIME, result };
-                    logs_array[number_of_logs] = log2;
-                    number_of_logs++;
+                    log_add(logs_array, make_entry(ZUMO_TITLE_TIME, result));
                     
                     track_completed = true;
                     
-                    for (int i = 0; i < number_of_logs; i++) {
-                        mqtt_logs_cache log = logs_array[i];
-                        print_mqtt(log.title, "%ld", log.time);
-                    }
+                    log_send(logs_array);
                 }
             } else {
                 motor_turn_diff(speed, shift_correction);
@@ -171,16 +154,12 @@ int zmain(void)
                         line_was_lost = false;
                         logged_lost_line = false;
                         
-                        mqtt_logs_cache log = { ZUMO_TITLE_LINE, xTaskGetTickCount() };
-                        logs_array[number_of_logs] = log;
-                        number_of_logs++;
+                        log_add(logs_array, make_entry(ZUMO_TITLE_LINE, xTaskGetTickCount()));
                     } else if (check_if_following_line() != 0 && !logged_lost_line) {
                         logged_lost_line = true;
                         line_was_lost = true;
                         
-                        mqtt_logs_cache log = { ZUMO_TITLE_MISS, xTaskGetTickCount() };
-                        logs_array[number_of_logs] = log;
-                        number_of_logs++;
+                        log_add(logs_array, make_entry(ZUMO_TITLE_MISS, xTaskGetTickCount()));
                     }
                 }
                 

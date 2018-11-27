@@ -134,7 +134,7 @@ int zmain(void)
                 
                 start_time = xTaskGetTickCount();
                 //print_mqtt(ZUMO_TITLE_START, "%ld", start_time);
-                mqtt_logs_cache log = { ZUMO_TITLE_LINE, start_time };
+                mqtt_logs_cache log = { ZUMO_TITLE_START, start_time };
                 logs_array[number_of_logs] = log;
                 number_of_logs++;
                 
@@ -165,21 +165,25 @@ int zmain(void)
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
                 
-                if (check_if_following_line() == 0 && line_was_lost) {
-                    line_was_lost = false;
-                    logged_lost_line = false;
-                    
-                    mqtt_logs_cache log = { ZUMO_TITLE_LINE, xTaskGetTickCount() };
-                    logs_array[number_of_logs] = log;
-                    number_of_logs++;
-                } else if (check_if_following_line() != 0 && !logged_lost_line) {
-                    logged_lost_line = true;
-                    line_was_lost = true;
-                    
-                    mqtt_logs_cache log = { ZUMO_TITLE_MISS, xTaskGetTickCount() };
-                    logs_array[number_of_logs] = log;
-                    number_of_logs++;
+                if (cross_count > 1) {
+                    //log only if track started
+                    if (check_if_following_line() == 0 && line_was_lost) {
+                        line_was_lost = false;
+                        logged_lost_line = false;
+                        
+                        mqtt_logs_cache log = { ZUMO_TITLE_LINE, xTaskGetTickCount() };
+                        logs_array[number_of_logs] = log;
+                        number_of_logs++;
+                    } else if (check_if_following_line() != 0 && !logged_lost_line) {
+                        logged_lost_line = true;
+                        line_was_lost = true;
+                        
+                        mqtt_logs_cache log = { ZUMO_TITLE_MISS, xTaskGetTickCount() };
+                        logs_array[number_of_logs] = log;
+                        number_of_logs++;
+                    }
                 }
+                
             }
         }
     }

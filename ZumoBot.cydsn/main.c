@@ -71,7 +71,7 @@ int zmain(void)
     float d_coefficient = 4;    
     TickType_t start_time;
     TickType_t end_time;
-    log_entry* logs_array = malloc(sizeof(log_entry));
+    log_entry* logs_array = log_init();
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -80,10 +80,10 @@ int zmain(void)
     UART_1_Start();    
     ADC_Battery_Start();
     ADC_Battery_StartConvert();  
-    printf("Program initialized\n");
-    print_mqtt(ZUMO_TITLE_READY, "line");
     PWM_Start();    
     IR_Start();
+    printf("Program initialized\n");
+    print_mqtt(ZUMO_TITLE_READY, "line");
     
     for (;;) {  
         

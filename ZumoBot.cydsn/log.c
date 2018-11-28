@@ -17,6 +17,10 @@
 
 //static log_entry log[0];
 
+log_entry* log_init(){
+        return malloc(sizeof(log_entry));
+}
+
 log_entry make_entry(char* title, TickType_t time){
     log_entry log_item = {title, time};
     return log_item;
@@ -25,12 +29,11 @@ log_entry make_entry(char* title, TickType_t time){
 void log_add(log_entry** log, log_entry data){
     log_entry* old = *log;
     log_entry* new;
-    int entry_count = sizeof(log) / sizeof(log_entry);
+    int entry_count = (sizeof(log) / sizeof(log_entry)) - 1;
     new = realloc(old, (++entry_count) * sizeof(log_entry));
     *log = new;
     *log[entry_count] = data;
     free(old);
-    
 }
 
 void log_write(log_entry** log, int position, log_entry data){
@@ -45,14 +48,14 @@ void log_output(log_entry** log){
     int entry_count = sizeof(log) / sizeof(log_entry);
     for(int i = 0; i < entry_count; i++){
         printf("Data: %s\n"
-            "Time: %lu\n\n", log[i]->title, log[i]->time);
+            "Time: %lu\n\n", log[i]->title, (u_long)log[i]->time);
     }
 }
 
 void log_send(log_entry** log){
     int entry_count = sizeof(log) / sizeof(log_entry);
         for(int i = 0; i < entry_count; i++){
-            print_mqtt(log[i]->title, "%lu", log[i]->time);
+            print_mqtt(log[i]->title, "%lu", (u_long)log[i]->time);
         }
 }
 

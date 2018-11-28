@@ -21,6 +21,9 @@
         TickType_t time;
     } log_entry;
     
+    // Initializes the log structure and returns a pointer
+    log_entry* log_init();
+    
     // Makes a valid log entry from passed arguments
     log_entry make_entry(char* title, TickType_t time);    
 

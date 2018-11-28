@@ -9,54 +9,38 @@
  *
  * ========================================
 */
-
 #include <log.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <mqtt_sender.h>
 
-//static log_entry log[0];
-
-log_entry* log_init(){
-        return malloc(sizeof(log_entry));
-}
-
+    static log_entry (*logs)[] = NULL;
+    static int count = 0;
+ 
 log_entry make_entry(char* title, TickType_t time){
     log_entry log_item = {title, time};
     return log_item;
+}  
+    
+void log_add(char* title, TickType_t time){
+    log_entry data = make_entry(title, time);
+    logs = realloc(logs, sizeof(data) * (count + 1));
+    (*logs)[count] = data;
+    count++;
+}
+    
+log_entry log_read(int position){
+    return (*logs)[position];
 }
 
-void log_add(log_entry** log, log_entry data){
-    log_entry* old = *log;
-    log_entry* new;
-    int entry_count = (sizeof(log) / sizeof(log_entry)) - 1;
-    new = realloc(old, (++entry_count) * sizeof(log_entry));
-    *log = new;
-    *log[entry_count] = data;
-    free(old);
-}
-
-void log_write(log_entry** log, int position, log_entry data){
-    *log[position] = data;
-}
-
-log_entry log_read(log_entry** log, int position){
-    return *log[position];
-}
-
-void log_output(log_entry** log){
-    int entry_count = sizeof(log) / sizeof(log_entry);
-    for(int i = 0; i < entry_count; i++){
+void log_output(){
+    for(int i = 0; i < count; i++){
         printf("Data: %s\n"
-            "Time: %lu\n\n", log[i]->title, (u_long)log[i]->time);
+               "Time: %lu\n\n", (*logs)[i].title, (u_long)(*logs)[i].time);
     }
 }
 
-void log_send(log_entry** log){
-    int entry_count = sizeof(log) / sizeof(log_entry);
+void log_send(){
+    int entry_count = sizeof(logs) / sizeof(log_entry);
         for(int i = 0; i < entry_count; i++){
-            print_mqtt(log[i]->title, "%lu", (u_long)log[i]->time);
+            print_mqtt((*logs)[i].title, "%lu", (u_long)(*logs)[i].time);
         }
 }
-
 /* [] END OF FILE */

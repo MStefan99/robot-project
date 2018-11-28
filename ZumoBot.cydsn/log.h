@@ -13,34 +13,31 @@
 #ifndef LOG_H_
 #define LOG_H_
 
-#include <stdbool.h>
-#include <FreeRTOS.h>
+    #include <stdbool.h>
+    #include <FreeRTOS.h>
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <mqtt_sender.h>
     
     typedef struct {
         char *title;
         TickType_t time;
     } log_entry;
+
+    // Makes a valid log line from passed arguments (used for log_add)
+    log_entry make_entry(char* title, TickType_t time);
     
-    // Initializes the log structure and returns a pointer
-    log_entry* log_init();
+    // Adds a new log line
+    void log_add(char* title, TickType_t time);
+
+    // Reads the desired log line (unsafe!)
+    log_entry log_read(int position);
+
+    // Outputs the entire log via serial connection (USB)
+    void log_output();
     
-    // Makes a valid log entry from passed arguments
-    log_entry make_entry(char* title, TickType_t time);    
-
-    // Adds a new log entry
-    void log_add(log_entry** log, log_entry data);
-
-    // Writes log entry at the desired line (unsafe!)
-    void log_write(log_entry** log, int position, log_entry data);
-
-    // Reads the log at the desired line
-    log_entry log_read(log_entry** log, int position);
-
-    // Outputs the log via serial connection
-    void log_output(log_entry** log);
-
-    // Sends the log via mqtt
-    void log_send(log_entry** log);
+    // Sends the entire log via mqtt
+    void log_send();
 
 #endif
 

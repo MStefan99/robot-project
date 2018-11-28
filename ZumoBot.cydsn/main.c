@@ -71,7 +71,6 @@ int zmain(void)
     float d_coefficient = 4;    
     TickType_t start_time;
     TickType_t end_time;
-    log_entry* logs_array = log_init();
     
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
@@ -127,7 +126,7 @@ int zmain(void)
                 
                 start_time = xTaskGetTickCount();
                 //print_mqtt(ZUMO_TITLE_START, "%ld", start_time);
-                log_add(&logs_array, make_entry(ZUMO_TITLE_START, start_time));
+                log_add(ZUMO_TITLE_START, start_time);
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
@@ -136,14 +135,14 @@ int zmain(void)
                 
                 if (!track_completed) {
                     end_time = xTaskGetTickCount();
-                    log_add(&logs_array, make_entry(ZUMO_TITLE_STOP, end_time));
+                    log_add(ZUMO_TITLE_STOP, end_time);
                     
                     TickType_t result = end_time - start_time;
-                    log_add(&logs_array, make_entry(ZUMO_TITLE_TIME, result));
+                    log_add(ZUMO_TITLE_TIME, result);
                     
                     track_completed = true;
                     
-                    log_send(&logs_array);
+                    log_send();
                 }
             } else {
                 motor_turn_diff(speed, shift_correction);
@@ -155,12 +154,12 @@ int zmain(void)
                         line_was_lost = false;
                         logged_lost_line = false;
                         
-                        log_add(&logs_array, make_entry(ZUMO_TITLE_LINE, xTaskGetTickCount()));
+                        log_add(ZUMO_TITLE_LINE, xTaskGetTickCount());
                     } else if (check_if_following_line() != 0 && !logged_lost_line) {
                         logged_lost_line = true;
                         line_was_lost = true;
                         
-                        log_add(&logs_array, make_entry(ZUMO_TITLE_MISS, xTaskGetTickCount()));
+                        log_add(ZUMO_TITLE_MISS, xTaskGetTickCount());
                     }
                 }
                 

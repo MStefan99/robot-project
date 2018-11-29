@@ -15,13 +15,13 @@
     static log_entry (*logs)[] = NULL;
     static int count = 0;
  
-log_entry make_entry(char* title, TickType_t time)
+log_entry make_entry(char *title, TickType_t time)
 {
     log_entry log_item = {title, time};
     return log_item;
 }  
     
-void log_add(char* title, TickType_t time)
+void log_add(char *title, TickType_t time)
 {
     log_entry data = make_entry(title, time);
     logs = realloc(logs, sizeof(data) * (count + 1));
@@ -44,8 +44,8 @@ void log_output()
 
 void log_send()
 {
-        for(int i = 0; i < count; i++){
-            print_mqtt((*logs)[i].title, "%lu", (u_long)(*logs)[i].time);
-        }
+    for(int i = 0; i < count; i++){
+        print_mqtt((*logs)[i].title, "%lu", (u_long)(*logs)[i].time);
+    }
 }
 /* [] END OF FILE */

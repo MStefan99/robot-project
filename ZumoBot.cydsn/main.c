@@ -49,23 +49,20 @@ CY_ISR(Button_Interrupt)
 }
 
 typedef enum {
-    forward = 1,
-    back = -1
-} vertical_direction;
-
-typedef enum {
-    left = -1,
-    center = 0,
-    right = 1
-} horizontal_direction;
+    forward,
+    right,
+    back, 
+    left
+} robot_direction;
 
 
 typedef struct {
     int x;
     int y;
-    vertical_direction vertical_direction;
-    horizontal_direction horizontal_direction;
+    robot_direction direction;
 } robot_position; 
+
+robot_position current_position = { 0, 0, forward};
 
 
 int zmain(void)
@@ -93,7 +90,6 @@ int zmain(void)
     
     IR_Start();
     bool new_cross_detected = false;
-    robot_position current_position = { 0, 0, forward, center};
     
     for (;;) {  
         
@@ -153,6 +149,29 @@ int zmain(void)
 bool did_detect_obstacle() {
     //TODO msaveleva: implement. 
     return true;
+}
+
+void update_position(robot_direction direction) {
+    switch (direction) {
+        case forward:
+        current_position.y += 1;
+        break;
+        
+        case back:
+        current_position.y -= 1;
+        break;
+        
+        case left:
+        current_position.x -= 1;
+        break;
+        
+        case right:
+        current_position.x += 1;
+        break;
+        
+        default:
+        break;
+    }
 }
 
 /* [] END OF FILE */

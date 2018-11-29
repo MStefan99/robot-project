@@ -67,7 +67,7 @@ robot_position current_position = { 0, 0, forward};
 
 bool did_detect_obstacle();
 void update_position();
-void turn(robot_direction direction_to_turn, int line_shift);
+void turn(robot_direction direction_to_turn);
 void log_time(char *title, TickType_t time);
 
 
@@ -164,20 +164,23 @@ int zmain(void)
             } else if (new_cross_detected && cross_count > 2) {
                 if (did_detect_obstacle()) {
                     if (saw_block) {
-                        turn(previous_direction, line_shift);
+                        turn(previous_direction);
                         current_position.direction = previous_direction;
                     } else if (current_position.x >= 0) {
-                        turn(left, line_shift);
+                        turn(left);
                         current_position.direction = left;
                         previous_direction = left;
-                        saw_block = true;
                     } else {
-                        turn(right, line_shift);
+                        turn(right);
                         current_position.direction = right;
                         previous_direction = right;
-                        saw_block = true;
                     }
+                    
+                    saw_block = true;
                 } else {
+                    if (current_position.direction == forward) {
+                        saw_block = false;
+                    }
                     if (current_position.direction == left) {
                         turn(right, line_shift);
                     } else if (current_position.direction == right) {
@@ -185,8 +188,6 @@ int zmain(void)
                     }
                     
                     current_position.direction = forward;
-                    previous_direction = forward;
-                    saw_block = false;
                 }
                 
                 new_cross_detected = false;
@@ -206,13 +207,11 @@ int zmain(void)
     }
 }
 
-void turn(robot_direction direction_to_turn, int line_shift) {
+void turn(robot_direction direction_to_turn) {
     if (direction_to_turn == left) {
         motor_tank_turn(0, speed, 300);
-	    motor_turn_diff(speed, line_shift);
     } else if (direction_to_turn == right) {
         motor_tank_turn(1, speed, 300);
-	    motor_turn_diff(speed, line_shift);
     }
 }
 

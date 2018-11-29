@@ -48,6 +48,24 @@ CY_ISR(Button_Interrupt)
     SW1_ClearInterrupt();
 }
 
+typedef enum {
+    forward = 1,
+    back = -1
+} vertical_direction;
+
+typedef enum {
+    left = -1,
+    center = 0,
+    right = 1
+} horizontal_direction;
+
+
+typedef struct {
+    int x;
+    int y;
+    vertical_direction vertical_direction;
+    horizontal_direction horizontal_direction;
+} robot_position; 
 
 
 int zmain(void)
@@ -75,6 +93,7 @@ int zmain(void)
     
     IR_Start();
     bool new_cross_detected = false;
+    robot_position current_position = { 0, 0, forward, center};
     
     for (;;) {  
         
@@ -118,14 +137,22 @@ int zmain(void)
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
-            } else if (cross_count > cross_to_stop_on) {
+            } else if (current_position.x == 0 && current_position.y == 13) {
+                //TODO msaveleva: move forward for a while before stop. 
                 motor_forward(0,0);
             } else {
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
+                
+                //TODO msaveleva: update current_position. 
             }
         }
     }
+}
+
+bool did_detect_obstacle() {
+    //TODO msaveleva: implement. 
+    return true;
 }
 
 /* [] END OF FILE */

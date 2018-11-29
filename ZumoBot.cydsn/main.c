@@ -65,7 +65,8 @@ typedef struct {
 robot_position current_position = { 0, 0, forward};
 
 bool did_detect_obstacle();
-void update_position(robot_direction direction);
+void update_position();
+void turn(robot_direction direction_to_turn, int line_shift);
 
 
 int zmain(void)
@@ -93,6 +94,7 @@ int zmain(void)
     
     IR_Start();
     bool new_cross_detected = false;
+    bool position_updated;
     
     for (;;) {  
         
@@ -139,29 +141,48 @@ int zmain(void)
             } else if (current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
                 //TODO msaveleva: move forward for a while before stop. 
                 motor_forward(0,0);
+                position_updated = false;
             } else if (new_cross_detected && cross_count > 2) {
                 if (did_detect_obstacle()) {
                     if (current_position.x >= 0) {
-                        //turn left
-                        update_position(left);
+                        turn(left, line_shift);
+                        current_position.direction = left;
                     } else {
-                        //turn right
-                        update_position(right);
+                        turn(right, line_shift);
+                        current_position.direction = right;
                     }
                 } else {
                     if (current_position.direction == left) {
-                        //turn right
+                        turn(right, line_shift);
                     } else if (current_position.direction == right) {
-                        //turn left
+                        turn(left, line_shift);
                     }
                     
-                    update_position(forward);
+                    current_position.direction = forward;
                 }
+                
+                new_cross_detected = false;
+                position_updated = false;
             } else { // moving forward between to the next cross. 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
+                
+                if (!position_updated) {
+                    update_position();
+                    position_updated = true;
+                }
             }
         }
+    }
+}
+
+void turn(robot_direction direction_to_turn, int line_shift) {
+    if (direction_to_turn == left) {
+        motor_tank_turn(0, speed, 500);
+	    motor_turn_diff(speed, line_shift);
+    } else if (direction_to_turn == right) {
+        motor_tank_turn(1, speed, 600);
+	    motor_turn_diff(speed, line_shift);
     }
 }
 
@@ -170,8 +191,8 @@ bool did_detect_obstacle() {
     return true;
 }
 
-void update_position(robot_direction direction) {
-    switch (direction) {
+void update_position() {
+    switch (current_position.direction) {
         case forward:
         current_position.y += 1;
         break;

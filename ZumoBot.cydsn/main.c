@@ -28,10 +28,11 @@
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
-#define ZUMO_TITLE_READY "Zumo025/ready"
-#define ZUMO_TITLE_START "Zumo025/start"
-#define ZUMO_TITLE_STOP "Zumo025/stop"
-#define ZUMO_TITLE_TIME "Zumo025/time"
+#define ZUMO_TITLE_READY "Zumo033/ready"
+#define ZUMO_TITLE_START "Zumo033/start"
+#define ZUMO_TITLE_STOP "Zumo033/stop"
+#define ZUMO_TITLE_TIME "Zumo033/time"
+#define ZUMO_TITLE_POSITION "Zumo033/position"
 
 static const uint8_t speed = 100;
 static const int cross_to_stop_on = 2;
@@ -67,6 +68,7 @@ robot_position current_position = { 0, 0, forward};
 bool did_detect_obstacle();
 void update_position();
 void turn(robot_direction direction_to_turn, int line_shift);
+void log_time(char *title, TickType_t time);
 
 
 int zmain(void)
@@ -90,11 +92,15 @@ int zmain(void)
     ADC_Battery_Start();
     ADC_Battery_StartConvert();  
     printf("Program initialized\n");
+    print_mqtt(ZUMO_TITLE_READY, "maze");
     PWM_Start();
     
     IR_Start();
     bool new_cross_detected = false;
     bool position_updated = true;
+    bool logs_printed = false;
+    TickType_t start_time;
+    TickType_t end_time;
     
     for (;;) {  
         
@@ -136,12 +142,23 @@ int zmain(void)
                 IR_flush();
                 IR_wait();
                 
+                start_time = xTaskGetTickCount(); 
+                log_time(ZUMO_TITLE_START, start_time);
+                
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
             } else if (new_cross_detected && current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
                 //TODO msaveleva: move forward for a while before stop. 
                 motor_forward(0,0);
                 position_updated = false;
+                
+                if (!logs_printed) {
+                    end_time = xTaskGetTickCount();
+                    log_time(ZUMO_TITLE_STOP, end_time);
+                    log_time(ZUMO_TITLE_TIME, end_time - start_time); 
+                    
+                    logs_printed = true; 
+                }
             } else if (new_cross_detected && cross_count > 2) {
                 if (did_detect_obstacle()) {
                     if (current_position.x >= 0) {
@@ -187,8 +204,7 @@ void turn(robot_direction direction_to_turn, int line_shift) {
 }
 
 bool did_detect_obstacle() {
-    //TODO msaveleva: implement. 
-    return true;
+    return Ultra_GetDistance() <= 5;
 }
 
 void update_position() {
@@ -212,6 +228,22 @@ void update_position() {
         default:
         break;
     }
+    
+    char x_buf[3];
+    itoa(current_position.x, x_buf, 10);
+    char y_buf[2];
+    itoa(current_position.y, y_buf, 10);
+    
+    strcat(x_buf, y_buf);
+    
+    log_add(ZUMO_TITLE_POSITION, x_buf);
+}
+
+//TODO msaveleva: move to log.c
+void log_time(char *title, TickType_t time) {
+    char buf[20];
+    itoa(time, buf, 10);
+    log_add(title, buf);
 }
 
 /* [] END OF FILE */

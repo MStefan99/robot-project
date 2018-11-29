@@ -15,13 +15,13 @@
     static log_entry (*logs)[] = NULL;
     static int count = 0;
  
-log_entry make_entry(char *title, TickType_t time)
+log_entry make_entry(char *title, char *time)
 {
     log_entry log_item = {title, time};
     return log_item;
 }  
     
-void log_add(char *title, TickType_t time)
+void log_add(char *title, char *time)
 {
     log_entry data = make_entry(title, time);
     logs = realloc(logs, sizeof(data) * (count + 1));
@@ -29,16 +29,16 @@ void log_add(char *title, TickType_t time)
     count++;
 }
     
-log_entry log_read(int position)
+log_entry log_read(int index)
 {
-    return (*logs)[position];
+    return (*logs)[index];
 }
 
 void log_output()
 {
     for(int i = 0; i < count; i++){
         printf("Data: %s\n"
-               "Time: %lu\n\n", (*logs)[i].title, (u_long)(*logs)[i].time);
+               "Time: %s\n\n", (*logs)[i].title, (*logs)[i].time);
     }
 }
 

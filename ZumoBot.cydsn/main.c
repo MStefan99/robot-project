@@ -34,7 +34,7 @@
 #define ZUMO_TITLE_TIME "Zumo033/time"
 #define ZUMO_TITLE_POSITION "Zumo033/position"
 
-static const uint8_t speed = 100;
+static const uint8_t speed = 20;
 static const int cross_to_stop_on = 2;
 
 bool movement_allowed = false;
@@ -77,7 +77,6 @@ int zmain(void)
     struct sensors_ reflectance_values;
     bool reflectance_black = false;
     uint8_t cross_count = 0;
-    const uint8_t speed = 255;
     int line_shift_change;
     int line_shift;
     int shift_correction;
@@ -147,7 +146,7 @@ int zmain(void)
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
-            } else if (new_cross_detected && current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
+            } else if (new_cross_detected && cross_count == 5 && current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
                 //TODO msaveleva: move forward for a while before stop. 
                 motor_forward(0,0);
                 position_updated = false;
@@ -204,7 +203,10 @@ void turn(robot_direction direction_to_turn, int line_shift) {
 }
 
 bool did_detect_obstacle() {
-    return Ultra_GetDistance() <= 5;
+    int distance = Ultra_GetDistance();
+    printf("distance: %lu", (u_long)distance);
+    
+    return distance <= 2;
 }
 
 void update_position() {
@@ -236,14 +238,14 @@ void update_position() {
     
     strcat(x_buf, y_buf);
     
-    log_add(ZUMO_TITLE_POSITION, x_buf);
+    //log_add(ZUMO_TITLE_POSITION, x_buf);
 }
 
 //TODO msaveleva: move to log.c 
 void log_time(char *title, TickType_t time) {
     char buf[20];
     itoa(time, buf, 10);
-    log_add(title, buf);
+    //log_add(title, buf);
 }
 
 /* [] END OF FILE */

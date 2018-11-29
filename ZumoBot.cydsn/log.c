@@ -12,8 +12,8 @@
 
 #include <log.h>
 
-    static log_entry (*logs)[] = NULL;
-    static int count = 0;
+static log_entry (*logs)[] = NULL;
+static int count = 0;
  
 log_entry make_entry(char *title, char *time)
 {
@@ -45,7 +45,7 @@ void log_output()
 void log_send()
 {
     for(int i = 0; i < count; i++){
-        print_mqtt((*logs)[i].title, "%lu", (u_long)(*logs)[i].time);
+        print_mqtt((*logs)[i].title, "%s", (*logs)[i].time);
     }
 }
 /* [] END OF FILE */

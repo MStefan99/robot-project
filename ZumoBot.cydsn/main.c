@@ -34,7 +34,7 @@
 #define ZUMO_TITLE_TIME "Zumo033/time"
 #define ZUMO_TITLE_POSITION "Zumo033/position"
 
-static const uint8_t speed = 20;
+static const uint8_t speed = 150;
 static const int cross_to_stop_on = 2;
 
 bool movement_allowed = false;
@@ -87,7 +87,8 @@ int zmain(void)
     Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
     
     reflectance_start();
-    UART_1_Start();    
+    UART_1_Start(); 
+    Ultra_Start();
     ADC_Battery_Start();
     ADC_Battery_StartConvert();  
     printf("Program initialized\n");
@@ -98,6 +99,8 @@ int zmain(void)
     bool new_cross_detected = false;
     bool position_updated = true;
     bool logs_printed = false;
+    bool saw_block = false;
+    robot_direction previous_direction = forward; 
     TickType_t start_time;
     TickType_t end_time;
     
@@ -146,7 +149,7 @@ int zmain(void)
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
-            } else if (new_cross_detected && cross_count == 5 && current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
+            } else if (new_cross_detected && current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
                 //TODO msaveleva: move forward for a while before stop. 
                 motor_forward(0,0);
                 position_updated = false;
@@ -160,12 +163,19 @@ int zmain(void)
                 }
             } else if (new_cross_detected && cross_count > 2) {
                 if (did_detect_obstacle()) {
-                    if (current_position.x >= 0) {
+                    if (saw_block) {
+                        turn(previous_direction, line_shift);
+                        current_position.direction = previous_direction;
+                    } else if (current_position.x >= 0) {
                         turn(left, line_shift);
                         current_position.direction = left;
+                        previous_direction = left;
+                        saw_block = true;
                     } else {
                         turn(right, line_shift);
                         current_position.direction = right;
+                        previous_direction = right;
+                        saw_block = true;
                     }
                 } else {
                     if (current_position.direction == left) {
@@ -175,6 +185,8 @@ int zmain(void)
                     }
                     
                     current_position.direction = forward;
+                    previous_direction = forward;
+                    saw_block = false;
                 }
                 
                 new_cross_detected = false;
@@ -182,6 +194,8 @@ int zmain(void)
             } else { // moving forward between to the next cross. 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
+                
+                did_detect_obstacle();
                 
                 if (!position_updated) {
                     update_position();
@@ -194,19 +208,19 @@ int zmain(void)
 
 void turn(robot_direction direction_to_turn, int line_shift) {
     if (direction_to_turn == left) {
-        motor_tank_turn(0, speed, 500);
+        motor_tank_turn(0, speed, 300);
 	    motor_turn_diff(speed, line_shift);
     } else if (direction_to_turn == right) {
-        motor_tank_turn(1, speed, 600);
+        motor_tank_turn(1, speed, 300);
 	    motor_turn_diff(speed, line_shift);
     }
 }
 
 bool did_detect_obstacle() {
     int distance = Ultra_GetDistance();
-    printf("distance: %lu", (u_long)distance);
+    printf("distance: %lu\n", (u_long)distance);
     
-    return distance <= 2;
+    return distance <= 15;
 }
 
 void update_position() {
@@ -238,14 +252,14 @@ void update_position() {
     
     strcat(x_buf, y_buf);
     
-    //log_add(ZUMO_TITLE_POSITION, x_buf);
+    log_add(ZUMO_TITLE_POSITION, x_buf);
 }
 
 //TODO msaveleva: move to log.c 
 void log_time(char *title, TickType_t time) {
     char buf[20];
     itoa(time, buf, 10);
-    //log_add(title, buf);
+    log_add(title, buf);
 }
 
 /* [] END OF FILE */

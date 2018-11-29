@@ -94,7 +94,7 @@ int zmain(void)
     
     IR_Start();
     bool new_cross_detected = false;
-    bool position_updated;
+    bool position_updated = true;
     
     for (;;) {  
         
@@ -138,7 +138,7 @@ int zmain(void)
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
-            } else if (current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
+            } else if (new_cross_detected && current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
                 //TODO msaveleva: move forward for a while before stop. 
                 motor_forward(0,0);
                 position_updated = false;

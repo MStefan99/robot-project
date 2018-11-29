@@ -182,9 +182,9 @@ int zmain(void)
                         saw_block = false;
                     }
                     if (current_position.direction == left) {
-                        turn(right, line_shift);
+                        turn(right);
                     } else if (current_position.direction == right) {
-                        turn(left, line_shift);
+                        turn(left);
                     }
                     
                     current_position.direction = forward;

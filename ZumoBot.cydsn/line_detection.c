@@ -15,7 +15,8 @@
 static bool line_lost;
 static bool line_lost_direction;
 
-bool cross_detected() {
+bool cross_detected() 
+{
     struct sensors_ ref_readings;
     const uint16_t threshold = 20000;
     reflectance_read(&ref_readings);
@@ -42,7 +43,8 @@ void reflectance_normalize(struct sensors_ *ref_readings, struct sensors_differe
     ref_readings->r3 -= ref_offset->sensor3;
 }
 
-int get_offset(struct sensors_ *ref_readings){
+int get_offset(struct sensors_ *ref_readings)
+{
     static struct sensors_ ref_previous;
     int setpoint_value_inner = 21500;
     int setpoint_value_outer = 5000;
@@ -86,7 +88,8 @@ int get_offset(struct sensors_ *ref_readings){
     return (delta_r1 + delta_l1 + delta_r2 + delta_l2 + delta_r3 + delta_l3) / 180;
 }
 
-int is_following_line(){
+int is_following_line()
+{
     if (!line_lost){
      return 0;
     } else {
@@ -97,7 +100,8 @@ int is_following_line(){
         }
     }
 }
-int get_offset_change(struct sensors_ *ref_readings){
+int get_offset_change(struct sensors_ *ref_readings)
+{
     
     static int previous_offset;
     

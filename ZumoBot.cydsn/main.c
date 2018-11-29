@@ -69,6 +69,7 @@ bool did_detect_obstacle();
 void update_position();
 void turn(robot_direction direction_to_turn);
 void log_time(char *title, TickType_t time);
+void handle_detect_obstacle(bool *saw_block, robot_direction *previous_direction);
 
 
 int zmain(void)
@@ -163,24 +164,12 @@ int zmain(void)
                 }
             } else if (new_cross_detected && cross_count > 2) {
                 if (did_detect_obstacle()) {
-                    if (saw_block) {
-                        turn(previous_direction);
-                        current_position.direction = previous_direction;
-                    } else if (current_position.x >= 0) {
-                        turn(left);
-                        current_position.direction = left;
-                        previous_direction = left;
-                    } else {
-                        turn(right);
-                        current_position.direction = right;
-                        previous_direction = right;
-                    }
-                    
-                    saw_block = true;
+                    handle_detect_obstacle(&saw_block, &previous_direction);
                 } else {
                     if (current_position.direction == forward) {
                         saw_block = false;
                     }
+                    
                     if (current_position.direction == left) {
                         turn(right);
                     } else if (current_position.direction == right) {
@@ -188,6 +177,10 @@ int zmain(void)
                     }
                     
                     current_position.direction = forward;
+                    
+                    if (did_detect_obstacle()) {
+                        handle_detect_obstacle(&saw_block, &previous_direction);
+                    }
                 }
                 
                 new_cross_detected = false;
@@ -207,6 +200,23 @@ int zmain(void)
     }
 }
 
+void handle_detect_obstacle(bool *saw_block, robot_direction *previous_direction) {
+    if (*saw_block) {
+        turn(*previous_direction);
+        current_position.direction = *previous_direction;
+    } else if (current_position.x >= 0) {
+        turn(left);
+        current_position.direction = left;
+        *previous_direction = left;
+    } else {
+        turn(right);
+        current_position.direction = right;
+        *previous_direction = right;
+    }
+
+    *saw_block = true;
+}
+
 void turn(robot_direction direction_to_turn) {
     if (direction_to_turn == left) {
         motor_tank_turn(0, speed, 300);
@@ -219,7 +229,7 @@ bool did_detect_obstacle() {
     int distance = Ultra_GetDistance();
     printf("distance: %lu\n", (u_long)distance);
     
-    return distance <= 15;
+    return distance <= 22;
 }
 
 void update_position() {

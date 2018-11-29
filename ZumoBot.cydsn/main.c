@@ -64,6 +64,9 @@ typedef struct {
 
 robot_position current_position = { 0, 0, forward};
 
+bool did_detect_obstacle();
+void update_position(robot_direction direction);
+
 
 int zmain(void)
 {    
@@ -133,14 +136,30 @@ int zmain(void)
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
-            } else if (current_position.x == 0 && current_position.y == 13) {
+            } else if (current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
                 //TODO msaveleva: move forward for a while before stop. 
                 motor_forward(0,0);
-            } else {
+            } else if (new_cross_detected && cross_count > 2) {
+                if (did_detect_obstacle()) {
+                    if (current_position.x >= 0) {
+                        //turn left
+                        update_position(left);
+                    } else {
+                        //turn right
+                        update_position(right);
+                    }
+                } else {
+                    if (current_position.direction == left) {
+                        //turn right
+                    } else if (current_position.direction == right) {
+                        //turn left
+                    }
+                    
+                    update_position(forward);
+                }
+            } else { // moving forward between to the next cross. 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
-                
-                //TODO msaveleva: update current_position. 
             }
         }
     }

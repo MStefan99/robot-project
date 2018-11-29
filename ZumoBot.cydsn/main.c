@@ -239,7 +239,7 @@ void update_position() {
     log_add(ZUMO_TITLE_POSITION, x_buf);
 }
 
-//TODO msaveleva: move to log.c
+//TODO msaveleva: move to log.c 
 void log_time(char *title, TickType_t time) {
     char buf[20];
     itoa(time, buf, 10);

@@ -274,16 +274,16 @@ void update_position() {
         break;
     }
 
-    char buf[20];
-    sprintf(buf, "%d %d", current_position.x, current_position.y);
+    char *buf = malloc(sizeof(char) * 20);
+    sprintf(buf, "%lu %lu", (long)current_position.x, (long)current_position.y);
     
     log_add(ZUMO_TITLE_POSITION, buf);
 }
 
 //TODO msaveleva: move to log.c 
 void log_time(char *title, TickType_t time) {
-    char buf[20];
-    sprintf(buf, "%d", time);
+    char *buf = malloc(sizeof(char) * 20);
+    sprintf(buf, "%lu", (long)time);
     log_add(title, buf);
 }
 

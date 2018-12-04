@@ -193,6 +193,9 @@ int zmain(void)
                     turn(left);
                     current_position.direction = left;
                 }
+                
+                position_updated = false;
+                log_send();
             } else if (new_cross_detected && current_position.y == 11 && current_position.x == 0) {
                 if (current_position.direction == left) {
                     turn(right);
@@ -201,6 +204,9 @@ int zmain(void)
                 }
                 
                 current_position.direction = forward;
+                position_updated = false;
+                
+                log_send();
             } else { // moving forward between to the next cross. 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
@@ -267,21 +273,17 @@ void update_position() {
         default:
         break;
     }
+
+    char buf[20];
+    sprintf(buf, "%d %d", current_position.x, current_position.y);
     
-    char x_buf[3];
-    itoa(current_position.x, x_buf, 10);
-    char y_buf[2];
-    itoa(current_position.y, y_buf, 10);
-    
-    strcat(x_buf, y_buf);
-    
-    log_add(ZUMO_TITLE_POSITION, x_buf);
+    log_add(ZUMO_TITLE_POSITION, buf);
 }
 
 //TODO msaveleva: move to log.c 
 void log_time(char *title, TickType_t time) {
     char buf[20];
-    itoa(time, buf, 10);
+    sprintf(buf, "%d", time);
     log_add(title, buf);
 }
 

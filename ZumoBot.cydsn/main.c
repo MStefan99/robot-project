@@ -162,8 +162,8 @@ int zmain(void)
                     
                     logs_printed = true; 
                 }
-            } else if (new_cross_detected && cross_count > 2) {
-                if (did_detect_obstacle()) {
+            } else if (new_cross_detected && cross_count > 2 && current_position.y < 11) {
+                if (did_detect_obstacle() && current_position.direction == forward) {
                     handle_detect_obstacle(&saw_block, &previous_direction);
                 } else {
                     if (current_position.direction == forward) {
@@ -185,11 +185,25 @@ int zmain(void)
                 
                 new_cross_detected = false;
                 position_updated = false;
+            } else if (new_cross_detected && current_position.y == 11 && current_position.x != 0) {
+                if (current_position.x < 0 && current_position.direction != right) {
+                    turn(right);
+                    current_position.direction = right;
+                } else if (current_position.x > 0 && current_position.direction != left) {
+                    turn(left);
+                    current_position.direction = left;
+                }
+            } else if (new_cross_detected && current_position.y == 11 && current_position.x == 0) {
+                if (current_position.direction == left) {
+                    turn(right);
+                } else if (current_position.direction == right) {
+                    turn(left);
+                }
+                
+                current_position.direction = forward;
             } else { // moving forward between to the next cross. 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
-                
-                did_detect_obstacle();
                 
                 if (!position_updated) {
                     update_position();

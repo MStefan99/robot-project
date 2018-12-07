@@ -210,7 +210,7 @@ int zmain(void)
             } else { // moving forward to the next cross 
                 if (maze_finished) {
                     if (!logs_printed) {
-                        //TODO msaveleva: move forward a little before stop.
+                        motor_forward(speed / 2, 1200);
                         motor_forward(0,0);
                         
                         logs_printed = true;

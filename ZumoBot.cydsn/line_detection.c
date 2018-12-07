@@ -65,6 +65,9 @@ int get_offset(struct sensors_ *ref_readings)
     
     bool all_white = (ref_readings->l3 < threshold) && (ref_readings->l2 < threshold) && (ref_readings->l1 < threshold) && (ref_readings->r1 < threshold) && (ref_readings->r2 < threshold) && (ref_readings->r3 < threshold); 
     
+    if (ref_readings->r1 > threshold && ref_readings->l1 > threshold) {
+        return 0;
+    }
     if (right_black && all_white) {
         line_lost = true;
         line_lost_direction = true;

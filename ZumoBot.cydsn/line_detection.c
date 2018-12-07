@@ -20,7 +20,7 @@ bool cross_detected()
     struct sensors_ ref_readings;
     const uint16_t threshold = 20000;
     reflectance_read(&ref_readings);
-    if(ref_readings.l3 + ref_readings.l2 + ref_readings.l1 + ref_readings.r1 + ref_readings.r2 + ref_readings.r3 > threshold * 6){
+    if(ref_readings.l3 + ref_readings.l2 + ref_readings.l1 + ref_readings.r1 + ref_readings.r2 + ref_readings.r3 > threshold * 4){
         return true;
     }
     

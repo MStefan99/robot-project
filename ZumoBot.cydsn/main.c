@@ -104,6 +104,7 @@ int zmain(void)
     robot_direction previous_direction = forward; 
     TickType_t start_time;
     TickType_t end_time;
+    bool maze_finished = false;
     
     for (;;) {  
         
@@ -125,7 +126,7 @@ int zmain(void)
             reflectance_black = true;
         }
         
-        if(calibration_mode){
+        if(calibration_mode) {
             reflectance_read(&reflectance_values);
             reflectance_offset = reflectance_calibrate(&reflectance_values);
             calibration_mode = false;
@@ -150,19 +151,14 @@ int zmain(void)
                 
                 motor_turn_diff(speed, shift_correction);
                 new_cross_detected = false;
-            } else if (new_cross_detected && current_position.x == 0 && current_position.y == 13) { // the end of the maze. 
-                //TODO msaveleva: move forward for a while before stop. 
-                motor_forward(0,0);
+            } else if (new_cross_detected && current_position.y == 13 && current_position.x == 0) { // the end of the maze. 
                 position_updated = false;
+                new_cross_detected = false;
+                maze_finished = true;
                 
-                if (!logs_printed) {
-                    end_time = xTaskGetTickCount();
-                    log_time(ZUMO_TITLE_STOP, end_time);
-                    log_time(ZUMO_TITLE_TIME, end_time - start_time); 
-                    log_send();
-                    
-                    logs_printed = true; 
-                }
+                end_time = xTaskGetTickCount();
+                log_time(ZUMO_TITLE_STOP, end_time);
+                log_time(ZUMO_TITLE_TIME, end_time - start_time); 
             } else if (new_cross_detected && cross_count > 2 && current_position.y < 11) {
                 if (did_detect_obstacle() && current_position.direction == forward) {
                     handle_detect_obstacle(&saw_block, &previous_direction);
@@ -197,7 +193,6 @@ int zmain(void)
                 
                 new_cross_detected = false;
                 position_updated = false;
-                log_send(); //TODO msaveleva: remove
             } else if (new_cross_detected && current_position.y == 11 && current_position.x == 0) {
                 if (current_position.direction == left) {
                     turn(right);
@@ -206,17 +201,29 @@ int zmain(void)
                 }
                 
                 current_position.direction = forward;
-                new_cross_detected = false; 
+                
+                new_cross_detected = false;
                 position_updated = false;
-                
-                log_send(); //TODO msaveleva: remove
+            } else if (new_cross_detected && current_position.y == 12 && current_position.x == 0) {
+                new_cross_detected = false;
+                position_updated = false;
             } else { // moving forward to the next cross 
-                motor_turn_diff(speed, shift_correction);
-                new_cross_detected = false; //TODO msaveleva: remove?
+                if (maze_finished) {
+                    if (!logs_printed) {
+                        //TODO msaveleva: move forward a little before stop.
+                        motor_forward(0,0);
+                        
+                        logs_printed = true;
+                        log_send();
+                    }
+                } else {
+                    motor_turn_diff(speed, shift_correction);
+                    new_cross_detected = false; //TODO msaveleva: remove?
                 
-                if (!position_updated) {
-                    update_position();
-                    position_updated = true;
+                    if (!position_updated) {
+                        update_position();
+                        position_updated = true;
+                    }
                 }
             }
         }

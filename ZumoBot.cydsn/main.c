@@ -63,7 +63,7 @@ typedef struct {
     robot_direction direction;
 } robot_position; 
 
-robot_position current_position = { 0, 0, forward};
+robot_position current_position = { 0, 0, forward };
 
 bool did_detect_obstacle();
 void update_position();
@@ -159,6 +159,7 @@ int zmain(void)
                     end_time = xTaskGetTickCount();
                     log_time(ZUMO_TITLE_STOP, end_time);
                     log_time(ZUMO_TITLE_TIME, end_time - start_time); 
+                    log_send();
                     
                     logs_printed = true; 
                 }
@@ -194,8 +195,9 @@ int zmain(void)
                     current_position.direction = left;
                 }
                 
+                new_cross_detected = false;
                 position_updated = false;
-                log_send();
+                log_send(); //TODO msaveleva: remove
             } else if (new_cross_detected && current_position.y == 11 && current_position.x == 0) {
                 if (current_position.direction == left) {
                     turn(right);
@@ -204,12 +206,13 @@ int zmain(void)
                 }
                 
                 current_position.direction = forward;
+                new_cross_detected = false; 
                 position_updated = false;
                 
-                log_send();
-            } else { // moving forward between to the next cross. 
+                log_send(); //TODO msaveleva: remove
+            } else { // moving forward to the next cross 
                 motor_turn_diff(speed, shift_correction);
-                new_cross_detected = false;
+                new_cross_detected = false; //TODO msaveleva: remove?
                 
                 if (!position_updated) {
                     update_position();
@@ -275,15 +278,14 @@ void update_position() {
     }
 
     char *buf = malloc(sizeof(char) * 20);
-    sprintf(buf, "%lu %lu", (long)current_position.x, (long)current_position.y);
+    sprintf(buf, "%d %d", current_position.x, current_position.y);
     
     log_add(ZUMO_TITLE_POSITION, buf);
 }
 
-//TODO msaveleva: move to log.c 
 void log_time(char *title, TickType_t time) {
     char *buf = malloc(sizeof(char) * 20);
-    sprintf(buf, "%lu", (long)time);
+    sprintf(buf, "%d", time);
     log_add(title, buf);
 }
 

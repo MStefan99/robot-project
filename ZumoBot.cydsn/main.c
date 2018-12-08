@@ -34,13 +34,13 @@
 #define ZUMO_TITLE_STOP  "Zumo033/stop"
 #define ZUMO_TITLE_TIME  "Zumo033/time"
 
-static const uint8_t speed = 100;
-static const int cross_to_stop_on = 2;
 static const float pi = 3.14159265359;
 
 volatile bool movement_allowed = false;
 volatile bool finished = false;
 volatile bool calibration_mode = false;
+
+float to_degrees(float rad);
 
 CY_ISR_PROTO(Button_ISR);
 CY_ISR_PROTO(Finish_ISR);
@@ -49,7 +49,6 @@ CY_ISR(Button_ISR)
 {
     movement_allowed = true;
     calibration_mode = true;
-    Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer
     SW1_ClearInterrupt();
 }
 
@@ -63,12 +62,13 @@ CY_ISR(Finish_ISR)
 
 int zmain(void)
 {    
+    const uint8_t speed = 255; // Speed
+    int threshold = 4000; // Impact force
+    
     reflectance_offset_ reflectance_offset = {0,0,0};
     struct sensors_ reflectance_values;
     struct accData_ data;
     uint8_t cross_count = 0;
-    const uint8_t speed = 85;
-    int threshold = 4000;
     u_long start_time = 0;
     double angle = 0;
     bool started = false;
@@ -121,13 +121,16 @@ int zmain(void)
         reflectance_normalize(&reflectance_values, &reflectance_offset);
         
         if (movement_allowed) {
-            if (new_cross_detected && cross_count == 1) {
+            
+            if (cross_count < 1){
+                motor_forward(speed / 5, 0);
+            } else if (new_cross_detected && cross_count == 1) {
                 motor_forward(0, 0);
                 IR_flush();
                 IR_wait();
-                Finish_Timer_Start();
-                Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer
-                start_time = xTaskGetTickCount();\
+                Finish_Timer_Start(); // Start countdown timer
+                Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer at start
+                start_time = xTaskGetTickCount(); 
                 started = true;
                 log_time(ZUMO_TITLE_START, xTaskGetTickCount());
                 motor_forward(50, 500);
@@ -136,6 +139,7 @@ int zmain(void)
                 motor_forward(speed, 0);
             } else {
                 if (line_detected(2)){
+                    //Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer on line detection - usualy not needed
                     motor_tank_turn(1, speed, speed * 1.2);
                 }
             }
@@ -143,13 +147,13 @@ int zmain(void)
             if(started){
                 LSM303D_Read_Acc(&data);
                 if((abs(data.accX) > threshold || abs(data.accY) > threshold) && !hit_detected){
-                    angle = - ( atan2( (float)data.accY, (float)data.accX ) - pi ) * 180 / pi; // TODO MStefan99: simplify   
+                    angle = - to_degrees((atan2((float)data.accY, (float)data.accX) - pi));   
                     
                     char *buf = malloc(sizeof(char) * 20);
-                    sprintf(buf, "%d %d", xTaskGetTickCount(), (int)angle);
+                    sprintf(buf, "%lu %d", (u_long)xTaskGetTickCount(), (int)angle);
                     log_add(ZUMO_TITLE_HIT, buf);
                     hit_detected = true;
-                    Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer
+                    Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer at hit
                 } 
                 
                 if(abs(data.accX) < threshold && abs(data.accY) < threshold){
@@ -168,6 +172,10 @@ int zmain(void)
                 log_sent = true;
         }
     }
+}
+
+float to_degrees(float rad){
+    return rad * 180 / pi;
 }
 
 /* [] END OF FILE */

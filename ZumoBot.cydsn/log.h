@@ -21,19 +21,19 @@
     
     typedef struct {
         char *title;
-        char *data;
+        char *time;
     } log_entry;
 
     // Makes a valid log line from passed arguments (used for log_add)
-    log_entry make_entry(char *title,char *data);
+    log_entry make_entry(char *title, char *time);
     
     // Adds a new log line
-    void log_add(char *title, char *data);
+    void log_add(char *title, char *time);
     
-    void log_add_time(char *title, TickType_t time);
+    void log_time(char *title, TickType_t time);
 
     // Reads the desired log line (unsafe!)
-    log_entry log_read(int position);
+    log_entry log_read(int index);
 
     // Outputs the entire log via serial connection (USB)
     void log_output();

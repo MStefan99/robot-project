@@ -71,6 +71,7 @@ int zmain(void)
     int threshold = 4000;
     u_long start_time = 0;
     double angle = 0;
+    bool started = false;
     bool reflectance_black = false;
     bool log_sent = false;
     bool new_cross_detected = false;
@@ -119,8 +120,6 @@ int zmain(void)
         reflectance_read(&reflectance_values);
         reflectance_normalize(&reflectance_values, &reflectance_offset);
         
-        //printf("Timer: %d\n", Finish_Timer_ReadCounter());
-        
         if (movement_allowed) {
             if (new_cross_detected && cross_count == 1) {
                 motor_forward(0, 0);
@@ -128,12 +127,12 @@ int zmain(void)
                 IR_wait();
                 Finish_Timer_Start();
                 Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer
-                start_time = xTaskGetTickCount();
-                log_add_time(ZUMO_TITLE_START, xTaskGetTickCount());
+                start_time = xTaskGetTickCount();\
+                started = true;
+                log_time(ZUMO_TITLE_START, xTaskGetTickCount());
                 motor_forward(50, 500);
                 new_cross_detected = false;
             } else if (cross_count < 1) {
-                
                 motor_forward(speed, 0);
             } else {
                 if (line_detected(2)){
@@ -141,28 +140,32 @@ int zmain(void)
                 }
             }
             
-            LSM303D_Read_Acc(&data);
-            if((abs(data.accX) > threshold || abs(data.accY) > threshold) && !hit_detected){
-                angle = - ( atan2( (float)data.accY, (float)data.accX ) - pi ) * 180 / pi; // TODO MStefan99: simplify   
+            if(started){
+                LSM303D_Read_Acc(&data);
+                if((abs(data.accX) > threshold || abs(data.accY) > threshold) && !hit_detected){
+                    angle = - ( atan2( (float)data.accY, (float)data.accX ) - pi ) * 180 / pi; // TODO MStefan99: simplify   
+                    
+                    char *buf = malloc(sizeof(char) * 20);
+                    sprintf(buf, "%d %d", xTaskGetTickCount(), (int)angle);
+                    log_add(ZUMO_TITLE_HIT, buf);
+                    hit_detected = true;
+                    Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer
+                } 
                 
-                char *buf = malloc(sizeof(char) * 20);
-                sprintf(buf, "%u %d", xTaskGetTickCount(), (int)angle);
-                log_add(ZUMO_TITLE_HIT, buf);
-                hit_detected = true;
-                Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer
-            } 
+                if(abs(data.accX) < threshold && abs(data.accY) < threshold){
+                    hit_detected = false;
+                }  
+            }
             
-            if(abs(data.accX) < threshold && abs(data.accY) < threshold){
-                hit_detected = false;
-            }    
         }  else {
             motor_forward(0,0);            
         }
         
         if(finished && !log_sent) {
-                log_add_time(ZUMO_TITLE_STOP, xTaskGetTickCount());
-                log_add_time(ZUMO_TITLE_TIME, xTaskGetTickCount() - start_time);
-                log_output();
+                log_time(ZUMO_TITLE_STOP, xTaskGetTickCount());
+                log_time(ZUMO_TITLE_TIME, xTaskGetTickCount() - start_time);
+                log_send();
+                log_sent = true;
         }
     }
 }

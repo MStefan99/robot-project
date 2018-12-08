@@ -21,14 +21,16 @@
     
     typedef struct {
         char *title;
-        TickType_t time;
+        char *data;
     } log_entry;
 
     // Makes a valid log line from passed arguments (used for log_add)
-    log_entry make_entry(char *title, TickType_t time);
+    log_entry make_entry(char *title,char *data);
     
     // Adds a new log line
-    void log_add(char *title, TickType_t time);
+    void log_add(char *title, char *data);
+    
+    void log_add_time(char *title, TickType_t time);
 
     // Reads the desired log line (unsafe!)
     log_entry log_read(int position);

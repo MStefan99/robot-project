@@ -38,19 +38,27 @@ static const uint8_t speed = 100;
 static const int cross_to_stop_on = 2;
 static const float pi = 3.14159265359;
 
-bool movement_allowed = false;
+volatile bool movement_allowed = false;
+volatile bool finished = false;
 volatile bool calibration_mode = false;
 
-CY_ISR_PROTO(Button_Interrupt);
+CY_ISR_PROTO(Button_ISR);
+CY_ISR_PROTO(Finish_ISR);
 
-CY_ISR(Button_Interrupt)
+CY_ISR(Button_ISR)
 {
     movement_allowed = true;
     calibration_mode = true;
+    Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer
     SW1_ClearInterrupt();
 }
 
-
+CY_ISR(Finish_ISR)
+{
+    movement_allowed = false;
+    finished = true;
+    Finish_Timer_ClearFIFO();
+}
 
 
 int zmain(void)
@@ -58,16 +66,19 @@ int zmain(void)
     reflectance_offset_ reflectance_offset = {0,0,0};
     struct sensors_ reflectance_values;
     struct accData_ data;
-    bool reflectance_black = false;
     uint8_t cross_count = 0;
-    const uint8_t speed = 255;
+    const uint8_t speed = 85;
     int threshold = 4000;
+    u_long start_time = 0;
     double angle = 0;
+    bool reflectance_black = false;
+    bool log_sent = false;
     bool new_cross_detected = false;
     bool hit_detected = false;
     
     CyGlobalIntEnable; /* Enable global interrupts. */
-    Button_isr_StartEx(Button_Interrupt); // Link button interrupt to isr
+    Button_isr_StartEx(Button_ISR); // Link button interrupt to isr
+    Finish_Interrupt_StartEx(Finish_ISR); // Link finish interrupt to isr
     
     reflectance_start();
     UART_1_Start();    
@@ -108,12 +119,17 @@ int zmain(void)
         reflectance_read(&reflectance_values);
         reflectance_normalize(&reflectance_values, &reflectance_offset);
         
+        //printf("Timer: %d\n", Finish_Timer_ReadCounter());
+        
         if (movement_allowed) {
             if (new_cross_detected && cross_count == 1) {
                 motor_forward(0, 0);
                 IR_flush();
                 IR_wait();
-                print_mqtt(ZUMO_TITLE_START, "%u", xTaskGetTickCount()); // TODO MStefan99: add logging
+                Finish_Timer_Start();
+                Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer
+                start_time = xTaskGetTickCount();
+                log_add_time(ZUMO_TITLE_START, xTaskGetTickCount());
                 motor_forward(50, 500);
                 new_cross_detected = false;
             } else if (cross_count < 1) {
@@ -127,15 +143,27 @@ int zmain(void)
             
             LSM303D_Read_Acc(&data);
             if((abs(data.accX) > threshold || abs(data.accY) > threshold) && !hit_detected){
-                angle = - ( atan2( (float)data.accY, (float)data.accX ) - pi ) * 180 / pi; // TODO MStefan99: simplify                       
-                print_mqtt(ZUMO_TITLE_HIT, "%u %f", xTaskGetTickCount(), angle); // TODO MStefan99: add logging
+                angle = - ( atan2( (float)data.accY, (float)data.accX ) - pi ) * 180 / pi; // TODO MStefan99: simplify   
+                
+                char *buf = malloc(sizeof(char) * 20);
+                sprintf(buf, "%u %d", xTaskGetTickCount(), (int)angle);
+                log_add(ZUMO_TITLE_HIT, buf);
                 hit_detected = true;
+                Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer
             } 
             
             if(abs(data.accX) < threshold && abs(data.accY) < threshold){
                 hit_detected = false;
             }    
-        } // TODO MStefan99: add end condition
+        }  else {
+            motor_forward(0,0);            
+        }
+        
+        if(finished && !log_sent) {
+                log_add_time(ZUMO_TITLE_STOP, xTaskGetTickCount());
+                log_add_time(ZUMO_TITLE_TIME, xTaskGetTickCount() - start_time);
+                log_output();
+        }
     }
 }
 

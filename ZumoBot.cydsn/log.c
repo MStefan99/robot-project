@@ -15,20 +15,26 @@
     static log_entry (*logs)[] = NULL;
     static int count = 0;
  
-log_entry make_entry(char *title, TickType_t time)
+log_entry make_entry(char *title, char *data)
 {
-    log_entry log_item = {title, time};
+    log_entry log_item = {title, data};
     return log_item;
 }  
     
-void log_add(char *title, TickType_t time)
+void log_add(char *title, char *data)
 {
-    log_entry data = make_entry(title, time);
+    log_entry entry = make_entry(title, data);
     logs = realloc(logs, sizeof(data) * (count + 1));
-    (*logs)[count] = data;
+    (*logs)[count] = entry;
     count++;
 }
     
+void log_add_time(char *title, TickType_t time) {
+    char *buf = malloc(sizeof(char) * 20);
+    sprintf(buf, "%u", time);
+    log_add(title, buf);
+}
+
 log_entry log_read(int position)
 {
     return (*logs)[position];
@@ -37,15 +43,15 @@ log_entry log_read(int position)
 void log_output()
 {
     for(int i = 0; i < count; i++){
-        printf("Data: %s\n"
-               "Time: %lu\n\n", (*logs)[i].title, (u_long)(*logs)[i].time);
+        printf("Title: %s\n"
+               "Data: %s\n\n", (*logs)[i].title, (*logs)[i].data);
     }
 }
 
 void log_send()
 {
     for(int i = 0; i < count; i++){
-        print_mqtt((*logs)[i].title, "%lu", (u_long)(*logs)[i].time);
+        print_mqtt((*logs)[i].title, "%s", (*logs)[i].data);
     }
 }
 /* [] END OF FILE */

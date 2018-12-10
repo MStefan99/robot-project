@@ -121,9 +121,8 @@ int zmain(void)
         reflectance_normalize(&reflectance_values, &reflectance_offset);
         
         if (movement_allowed) {
-            
-            if (cross_count < 1){
-                motor_forward(speed / 5, 0);
+            if (cross_count < 1) {
+                motor_forward(80, 0);
             } else if (new_cross_detected && cross_count == 1) {
                 motor_forward(0, 0);
                 IR_flush();
@@ -135,18 +134,16 @@ int zmain(void)
                 log_time(ZUMO_TITLE_START, xTaskGetTickCount());
                 motor_forward(50, 500);
                 new_cross_detected = false;
-            } else if (cross_count < 1) {
-                motor_forward(speed, 0);
+            } else if (line_detected(2)) {
+                motor_backward(speed, 50);
+                motor_tank_turn(1, speed, 300);
             } else {
-                if (line_detected(2)){
-                    //Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer on line detection - usualy not needed
-                    motor_tank_turn(1, speed, speed * 1.2);
-                }
-            }
+                Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer on line detection
+                motor_forward(speed, 0);
             
-            if(started){
+                if (started) {
                 LSM303D_Read_Acc(&data);
-                if((abs(data.accX) > threshold || abs(data.accY) > threshold) && !hit_detected){
+                    if ((abs(data.accX) > threshold || abs(data.accY) > threshold) && !hit_detected) {
                     angle = - to_degrees((atan2((float)data.accY, (float)data.accX) - pi));   
                     
                     char *buf = malloc(sizeof(char) * 20);
@@ -156,12 +153,14 @@ int zmain(void)
                     Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer at hit
                 } 
                 
-                if(abs(data.accX) < threshold && abs(data.accY) < threshold){
+                    if (abs(data.accX) < threshold && abs(data.accY) < threshold) {
                     hit_detected = false;
                 }  
             }
+            }
             
-        }  else {
+            
+        } else {
             motor_forward(0,0);            
         }
         

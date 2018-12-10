@@ -28,9 +28,13 @@
     log_entry make_entry(char *title, char *time);
     
     // Adds a new log line
-    void log_add(char *title, char *time);
+    bool log_add(char *title, char *time);
     
+    // Adds an entry to the log with the time
     void log_time(char *title, TickType_t time);
+    
+    // Clears the log
+    void log_clear();
 
     // Reads the desired log line (unsafe!)
     log_entry log_read(int index);

@@ -148,7 +148,10 @@ int zmain(void)
                     
                     char *buf = malloc(sizeof(char) * 20);
                     sprintf(buf, "%lu %d", (u_long)xTaskGetTickCount(), (int)angle);
-                    log_add(ZUMO_TITLE_HIT, buf);
+                        if(log_add(ZUMO_TITLE_HIT, buf)){
+                            log_send();
+                            log_clear();
+                        }
                     hit_detected = true;
                     Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer at hit
                 } 

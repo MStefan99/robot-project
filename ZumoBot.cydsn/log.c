@@ -13,6 +13,7 @@
 #include <log.h>
 
 static log_entry (*logs)[] = NULL;
+static log_entry (*tmp)[] = NULL;
 static int count = 0;
  
 log_entry make_entry(char *title, char *time)
@@ -21,18 +22,32 @@ log_entry make_entry(char *title, char *time)
     return log_item;
 }  
     
-void log_add(char *title, char *time)
+bool log_add(char *title, char *time)
 {
     log_entry data = make_entry(title, time);
-    logs = realloc(logs, sizeof(data) * (count + 1));
-    (*logs)[count] = data;
-    count++;
+    tmp = realloc(logs, sizeof(data) * (count + 1));
+    if (tmp == NULL){
+        return 1;
+    } else {
+        logs = tmp;
+        (*logs)[count] = data;
+        count++;
+        return 0;
+    }
 }
     
-void log_time(char *title, TickType_t time) {
-    char *buf = malloc(sizeof(char) * 20);
-    sprintf(buf, "%d", time);
+void log_time(char *title, TickType_t time) 
+{
+    char *buf = malloc(sizeof(char) * 30);
+    sprintf(buf, "%lu", (u_long)time);
     log_add(title, buf);
+}
+
+void log_clear()
+{
+    free(logs);
+    count = 0;
+    logs = malloc(sizeof((*logs)[0]) * (count + 1));
 }
 
 log_entry log_read(int index)
@@ -54,4 +69,5 @@ void log_send()
         print_mqtt((*logs)[i].title, "%s", (*logs)[i].time);
     }
 }
+
 /* [] END OF FILE */

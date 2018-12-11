@@ -24,7 +24,7 @@
 
 /**
  * @file    main.c
- * @brief   
+ * @brief
  * @details  ** Enable global interrupt since Zumo library uses interrupts. **<br>&nbsp;&nbsp;&nbsp;CyGlobalIntEnable;<br>
 */
 
@@ -61,10 +61,10 @@ CY_ISR(Finish_ISR)
 
 
 int zmain(void)
-{    
+{
     const uint8_t speed = 255; // Speed
     int threshold = 4000; // Impact force
-    
+
     reflectance_offset_ reflectance_offset = {0,0,0};
     struct sensors_ reflectance_values;
     struct accData_ data;
@@ -76,30 +76,30 @@ int zmain(void)
     bool log_sent = false;
     bool new_cross_detected = false;
     bool hit_detected = false;
-    
+
     CyGlobalIntEnable; /* Enable global interrupts. */
     Button_isr_StartEx(Button_ISR); // Link button interrupt to isr
     Finish_Interrupt_StartEx(Finish_ISR); // Link finish interrupt to isr
-    
+
     reflectance_start();
-    UART_1_Start();    
+    UART_1_Start();
     ADC_Battery_Start();
-    ADC_Battery_StartConvert();  
+    ADC_Battery_StartConvert();
     LSM303D_Start();
     PWM_Start();
     IR_Start();
     printf("Program initialized\n");
     print_mqtt(ZUMO_TITLE_READY, "sumo");
-    
-    for (;;) {  
-        
+
+    for (;;) {
+
         if(!voltage_test()){
             printf("Low voltage detected! Program will not continue unless sufficient voltage supplied.\n");
             PWM_Stop();
             vTaskDelay(1000);
             continue;
         }
-        
+
         if(!cross_detected()){
             if(reflectance_black){
                 // Update cross count after leaving the intersection
@@ -110,18 +110,18 @@ int zmain(void)
         } else {
             reflectance_black = true;
         }
-        
+
         if(calibration_mode){
             reflectance_read(&reflectance_values);
             reflectance_offset = reflectance_calibrate(&reflectance_values);
             calibration_mode = false;
-        } 
-        
+        }
+
         reflectance_read(&reflectance_values);
         reflectance_normalize(&reflectance_values, &reflectance_offset);
-        
+
         if (movement_allowed) {
-            
+
             if (cross_count < 1){
                 motor_forward(speed / 5, 0);
             } else if (new_cross_detected && cross_count == 1) {
@@ -130,7 +130,7 @@ int zmain(void)
                 IR_wait();
                 Finish_Timer_Start(); // Start countdown timer
                 Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer at start
-                start_time = xTaskGetTickCount(); 
+                start_time = xTaskGetTickCount();
                 started = true;
                 log_time(ZUMO_TITLE_START, xTaskGetTickCount());
                 motor_forward(50, 500);
@@ -143,31 +143,32 @@ int zmain(void)
                     motor_tank_turn(1, speed, speed * 1.2);
                 }
             }
-            
+
             if(started){
                 LSM303D_Read_Acc(&data);
                 if((abs(data.accX) > threshold || abs(data.accY) > threshold) && !hit_detected){
-                    angle = - to_degrees((atan2((float)data.accY, (float)data.accX) - pi));   
-                    
+                    angle = - to_degrees((atan2((float)data.accY, (float)data.accX) - pi));
+
                     char *buf = malloc(sizeof(char) * 20);
                     sprintf(buf, "%lu %d", (u_long)xTaskGetTickCount(), (int)angle);
                         if(log_add(ZUMO_TITLE_HIT, buf)){
                             log_send();
                             log_clear();
+                            log_add(ZUMO_TITLE_HIT, buf);
                         }
                     hit_detected = true;
                     Finish_Timer_WriteCounter(Finish_Timer_ReadPeriod()); // Reset timer at hit
-                } 
-                
+                }
+
                 if(abs(data.accX) < threshold && abs(data.accY) < threshold){
                     hit_detected = false;
-                }  
+                }
             }
-            
+
         }  else {
-            motor_forward(0,0);            
+            motor_forward(0,0);
         }
-        
+
         if(finished && !log_sent) {
                 log_time(ZUMO_TITLE_STOP, xTaskGetTickCount());
                 log_time(ZUMO_TITLE_TIME, xTaskGetTickCount() - start_time);
